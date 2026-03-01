@@ -78,7 +78,7 @@ CRITICAL INSTRUCTIONS for extracting data:
 - Each section has its OWN "Policy Eff (MM/DD/YYYY)" and "Policy Exp (MM/DD/YYYY)" columns.
 - For gl_effective_date and gl_expiration_date: ONLY use the dates from the "COMMERCIAL GENERAL LIABILITY" row. Do NOT use dates from other sections.
 - For wc_effective_date and wc_expiration_date: ONLY use the dates from the "WORKERS COMPENSATION" row.
-- The "insured" name is in the top-left area of the form — use this as the subcontractor name.
+- The "insured" name is in the top-left area of the form — use ONLY the company/person name as the subcontractor name. Do NOT include their address, city, state, or zip code. For example if the insured is "TRIPLE A POOLS & SPAS, INC.\n50 PURICK ST.\nBLUE POINT, NY 11715", the subcontractor should be just "TRIPLE A POOLS & SPAS, INC."
 - The "producer" is the insurance agency/broker — use this as the company field.
 - Policy numbers, carriers, and limits should also come from their respective sections.
 - GL LIMITS: Extract BOTH "Each Occurrence" limit AND "General Aggregate" limit from the GL section. These are typically shown as separate line items (e.g., $1,000,000 / $2,000,000).
@@ -110,7 +110,7 @@ CRITICAL INSTRUCTIONS for extracting data:
               parameters: {
                 type: "object",
                 properties: {
-                  subcontractor: { type: "string", description: "The insured party / subcontractor name" },
+                  subcontractor: { type: "string", description: "The insured party / subcontractor name ONLY (no address). Just the company or person name." },
                   company: { type: "string", description: "The insurance company or agency name" },
                   gl_policy_number: { type: "string", description: "General Liability policy number" },
                   gl_carrier: { type: "string", description: "General Liability insurance carrier" },
