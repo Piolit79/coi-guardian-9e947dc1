@@ -129,10 +129,16 @@ const Index = () => {
   const activeProjects = (projects || []).filter(p => p.status === 'active').length;
   const projectMap = new Map((projects || []).map(p => [p.id, p.name]));
 
-  // Alerts: expiring + expired COIs
+  // Alerts: expiring + expired COIs, sorted chronologically by expiration date
   const alerts = dashboardCois
     .filter(c => c.status === 'expiring' || c.status === 'expired')
-    .sort((a, b) => a.daysUntilExpiry - b.daysUntilExpiry);
+    .sort((a, b) => {
+      const toMs = (d: string) => {
+        const p = (d || '').split('/');
+        return p.length === 3 ? new Date(+p[2], +p[0] - 1, +p[1]).getTime() : 0;
+      };
+      return toMs(a.expirationDate) - toMs(b.expirationDate);
+    });
 
   // Calendar: group expirations by month (key: 'YYYY-MM')
   const expirationsByMonth = useMemo(() => {
@@ -236,9 +242,8 @@ const Index = () => {
                         </p>
                       )}
                       <p className="text-xs text-muted-foreground">
-                        {coi.status === 'expired'
-                          ? `Policy ${coi.policyNumber} expired. Request updated certificate.`
-                          : `Policy ${coi.policyNumber} expires ${coi.expirationDate}. Send renewal reminder.`}
+                        {coi.status === 'expired' ? 'Expired' : 'Expires'}{' '}
+                        <span className="font-medium text-foreground">{coi.expirationDate}</span>
                       </p>
                     </div>
                   </Card>
