@@ -71,7 +71,17 @@ serve(async (req) => {
         messages: [
           {
             role: "system",
-            content: `You are a Certificate of Insurance (COI) data extraction expert. Extract all relevant information from the provided COI document image. Be precise with policy numbers, dates, and coverage amounts. If a field is not found, leave it empty.`,
+            content: `You are an ACORD Certificate of Insurance (COI) data extraction expert. 
+
+CRITICAL INSTRUCTIONS for extracting dates:
+- The document is an ACORD 25 form with multiple sections: General Liability, Automobile Liability, Umbrella/Excess, Workers Compensation, etc.
+- Each section has its OWN "Policy Eff (MM/DD/YYYY)" and "Policy Exp (MM/DD/YYYY)" columns.
+- For gl_effective_date and gl_expiration_date: ONLY use the dates from the "COMMERCIAL GENERAL LIABILITY" row. Do NOT use dates from other sections.
+- For wc_effective_date and wc_expiration_date: ONLY use the dates from the "WORKERS COMPENSATION" row.
+- The "insured" name is in the top-left area of the form — use this as the subcontractor name.
+- The "producer" is the insurance agency/broker — use this as the company field.
+- Policy numbers, carriers, and limits should also come from their respective sections.
+- If a field is not found in the correct section, leave it empty.`,
           },
           {
             role: "user",
@@ -82,7 +92,7 @@ serve(async (req) => {
               },
               {
                 type: "text",
-                text: "Extract all COI data from this certificate of insurance document.",
+                text: "Extract COI data from this ACORD certificate. Make sure GL dates come from the General Liability section row and WC dates from the Workers Compensation section row. Do not mix dates between sections.",
               },
             ],
           },
