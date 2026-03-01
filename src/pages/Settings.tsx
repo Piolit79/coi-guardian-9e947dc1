@@ -98,7 +98,26 @@ export default function Settings() {
           </div>
         </Card>
 
-        {/* GC Identity - for COI verification */}
+        {/* Notification Email */}
+        <Card className="border border-border p-6 mb-6">
+          <h2 className="text-sm font-semibold text-foreground mb-4">
+            Expiration Reminders
+          </h2>
+          <p className="text-xs text-muted-foreground mb-4">
+            Get emailed at 30, 15, and 3 days before a COI expires. Updated certificates automatically stop reminders.
+          </p>
+          <div className="space-y-2">
+            <Label htmlFor="notification-email" className="text-xs">Notification Email</Label>
+            <Input
+              id="notification-email"
+              type="email"
+              placeholder="you@company.com"
+              defaultValue={(settings as any)?.notification_email || ''}
+              onBlur={(e) => updateSettings.mutate({ notification_email: e.target.value } as any)}
+            />
+          </div>
+        </Card>
+
         <Card className="border border-border p-6 mb-6">
           <h2 className="text-sm font-semibold text-foreground mb-4">
             GC Identity (for COI Verification)
