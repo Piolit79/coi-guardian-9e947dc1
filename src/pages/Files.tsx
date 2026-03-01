@@ -2,7 +2,7 @@ import { AppLayout } from '@/components/AppLayout';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { FileText, Download, Loader2, FolderOpen, ExternalLink, X } from 'lucide-react';
 import { format } from 'date-fns';
@@ -93,23 +93,22 @@ export default function Files() {
   const [previewName, setPreviewName] = useState<string>('');
   const [openingPath, setOpeningPath] = useState<string | null>(null);
 
-  useEffect(() => {
-    return () => {
-      if (previewUrl) URL.revokeObjectURL(previewUrl);
-    };
-  }, [previewUrl]);
-
   const handleOpen = async (filePath: string) => {
     setOpeningPath(filePath);
     try {
       const { data, error } = await supabase.storage
         .from('certificates')
-        .download(filePath);
-      if (error || !data) throw error || new Error('Unable to load file');
+        .createSignedUrl(filePath, 600);
+      if (error) throw error;
 
-      if (previewUrl) URL.revokeObjectURL(previewUrl);
-      const url = URL.createObjectURL(data);
-      setPreviewUrl(url);
+      const signed = (data as any)?.signedUrl || (data as any)?.signedURL;
+      if (!signed) throw new Error('Unable to create preview URL');
+
+      const fullUrl = signed.startsWith('http')
+        ? signed
+        : `${import.meta.env.VITE_SUPABASE_URL}/storage/v1${signed.startsWith('/') ? signed : `/${signed}`}`;
+
+      setPreviewUrl(fullUrl);
       setPreviewName(getDisplayName(filePath));
     } catch (e) {
       console.error('Open failed', e);
@@ -164,7 +163,6 @@ export default function Files() {
                   size="icon"
                   className="h-7 w-7"
                   onClick={() => {
-                    URL.revokeObjectURL(previewUrl);
                     setPreviewUrl(null);
                     setPreviewName('');
                   }}
