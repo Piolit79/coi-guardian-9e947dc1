@@ -18,27 +18,36 @@ export type Database = {
         Row: {
           additional_insured_required: boolean
           agreement_file_path: string | null
+          company_name: string | null
           created_at: string
           id: string
           min_gl_coverage_limit: string | null
+          owner_info: string | null
+          property_address: string | null
           updated_at: string
           wc_required: boolean
         }
         Insert: {
           additional_insured_required?: boolean
           agreement_file_path?: string | null
+          company_name?: string | null
           created_at?: string
           id?: string
           min_gl_coverage_limit?: string | null
+          owner_info?: string | null
+          property_address?: string | null
           updated_at?: string
           wc_required?: boolean
         }
         Update: {
           additional_insured_required?: boolean
           agreement_file_path?: string | null
+          company_name?: string | null
           created_at?: string
           id?: string
           min_gl_coverage_limit?: string | null
+          owner_info?: string | null
+          property_address?: string | null
           updated_at?: string
           wc_required?: boolean
         }
@@ -81,13 +90,17 @@ export type Database = {
         Row: {
           action_over: string
           additional_insured: string
+          certificate_holder: string | null
           coi_file_path: string | null
           company: string
           created_at: string
+          description_of_operations: string | null
+          gl_aggregate_limit: string | null
           gl_carrier: string | null
           gl_coverage_limit: string | null
           gl_effective_date: string | null
           gl_expiration_date: string | null
+          gl_per_occurrence_limit: string | null
           gl_policy_file_path: string | null
           gl_policy_number: string | null
           hammer_clause: string
@@ -95,6 +108,11 @@ export type Database = {
           labor_law_coverage: string
           project_id: string
           subcontractor: string
+          umbrella_carrier: string | null
+          umbrella_effective_date: string | null
+          umbrella_expiration_date: string | null
+          umbrella_limit: string | null
+          umbrella_policy_number: string | null
           updated_at: string
           user_id: string | null
           wc_carrier: string | null
@@ -105,13 +123,17 @@ export type Database = {
         Insert: {
           action_over?: string
           additional_insured?: string
+          certificate_holder?: string | null
           coi_file_path?: string | null
           company?: string
           created_at?: string
+          description_of_operations?: string | null
+          gl_aggregate_limit?: string | null
           gl_carrier?: string | null
           gl_coverage_limit?: string | null
           gl_effective_date?: string | null
           gl_expiration_date?: string | null
+          gl_per_occurrence_limit?: string | null
           gl_policy_file_path?: string | null
           gl_policy_number?: string | null
           hammer_clause?: string
@@ -119,6 +141,11 @@ export type Database = {
           labor_law_coverage?: string
           project_id: string
           subcontractor: string
+          umbrella_carrier?: string | null
+          umbrella_effective_date?: string | null
+          umbrella_expiration_date?: string | null
+          umbrella_limit?: string | null
+          umbrella_policy_number?: string | null
           updated_at?: string
           user_id?: string | null
           wc_carrier?: string | null
@@ -129,13 +156,17 @@ export type Database = {
         Update: {
           action_over?: string
           additional_insured?: string
+          certificate_holder?: string | null
           coi_file_path?: string | null
           company?: string
           created_at?: string
+          description_of_operations?: string | null
+          gl_aggregate_limit?: string | null
           gl_carrier?: string | null
           gl_coverage_limit?: string | null
           gl_effective_date?: string | null
           gl_expiration_date?: string | null
+          gl_per_occurrence_limit?: string | null
           gl_policy_file_path?: string | null
           gl_policy_number?: string | null
           hammer_clause?: string
@@ -143,6 +174,11 @@ export type Database = {
           labor_law_coverage?: string
           project_id?: string
           subcontractor?: string
+          umbrella_carrier?: string | null
+          umbrella_effective_date?: string | null
+          umbrella_expiration_date?: string | null
+          umbrella_limit?: string | null
+          umbrella_policy_number?: string | null
           updated_at?: string
           user_id?: string | null
           wc_carrier?: string | null

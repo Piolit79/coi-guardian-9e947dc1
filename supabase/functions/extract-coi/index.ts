@@ -73,7 +73,7 @@ serve(async (req) => {
             role: "system",
             content: `You are an ACORD Certificate of Insurance (COI) data extraction expert. 
 
-CRITICAL INSTRUCTIONS for extracting dates:
+CRITICAL INSTRUCTIONS for extracting data:
 - The document is an ACORD 25 form with multiple sections: General Liability, Automobile Liability, Umbrella/Excess, Workers Compensation, etc.
 - Each section has its OWN "Policy Eff (MM/DD/YYYY)" and "Policy Exp (MM/DD/YYYY)" columns.
 - For gl_effective_date and gl_expiration_date: ONLY use the dates from the "COMMERCIAL GENERAL LIABILITY" row. Do NOT use dates from other sections.
@@ -81,6 +81,10 @@ CRITICAL INSTRUCTIONS for extracting dates:
 - The "insured" name is in the top-left area of the form — use this as the subcontractor name.
 - The "producer" is the insurance agency/broker — use this as the company field.
 - Policy numbers, carriers, and limits should also come from their respective sections.
+- GL LIMITS: Extract BOTH "Each Occurrence" limit AND "General Aggregate" limit from the GL section. These are typically shown as separate line items (e.g., $1,000,000 / $2,000,000).
+- UMBRELLA/EXCESS: Extract umbrella policy number, carrier, and "Each Occurrence" limit from the Umbrella/Excess Liability section if present.
+- CERTIFICATE HOLDER: Extract the certificate holder name from the bottom-left box of the form.
+- DESCRIPTION OF OPERATIONS: Extract the full text from the "Description of Operations / Locations / Vehicles" section. This often contains Additional Insured endorsements and project-specific info.
 - If a field is not found in the correct section, leave it empty.`,
           },
           {
@@ -112,7 +116,14 @@ CRITICAL INSTRUCTIONS for extracting dates:
                   gl_carrier: { type: "string", description: "General Liability insurance carrier" },
                   gl_effective_date: { type: "string", description: "GL policy effective date in YYYY-MM-DD format" },
                   gl_expiration_date: { type: "string", description: "GL policy expiration date in YYYY-MM-DD format" },
-                  gl_coverage_limit: { type: "string", description: "GL coverage limit amount (e.g. $1,000,000)" },
+                  gl_coverage_limit: { type: "string", description: "GL Each Occurrence limit (e.g. $1,000,000)" },
+                  gl_per_occurrence_limit: { type: "string", description: "GL Each Occurrence limit (same as gl_coverage_limit, e.g. $1,000,000)" },
+                  gl_aggregate_limit: { type: "string", description: "GL General Aggregate limit (e.g. $2,000,000)" },
+                  umbrella_policy_number: { type: "string", description: "Umbrella/Excess Liability policy number" },
+                  umbrella_carrier: { type: "string", description: "Umbrella/Excess Liability carrier" },
+                  umbrella_limit: { type: "string", description: "Umbrella Each Occurrence limit (e.g. $5,000,000)" },
+                  umbrella_effective_date: { type: "string", description: "Umbrella effective date YYYY-MM-DD" },
+                  umbrella_expiration_date: { type: "string", description: "Umbrella expiration date YYYY-MM-DD" },
                   wc_policy_number: { type: "string", description: "Workers Compensation policy number" },
                   wc_carrier: { type: "string", description: "Workers Compensation carrier" },
                   wc_effective_date: { type: "string", description: "WC effective date in YYYY-MM-DD format" },
@@ -120,6 +131,8 @@ CRITICAL INSTRUCTIONS for extracting dates:
                   labor_law_coverage: { type: "string", enum: ["included", "excluded", "unknown"], description: "Whether labor law coverage is included" },
                   action_over: { type: "string", enum: ["included", "excluded", "unknown"], description: "Whether action over coverage is included" },
                   hammer_clause: { type: "string", enum: ["included", "excluded", "unknown"], description: "Whether hammer clause is included" },
+                  certificate_holder: { type: "string", description: "The certificate holder name from the bottom-left box" },
+                  description_of_operations: { type: "string", description: "Full text from Description of Operations / Locations / Vehicles section" },
                 },
                 required: ["subcontractor"],
                 additionalProperties: false,
@@ -217,6 +230,26 @@ CRITICAL INSTRUCTIONS for extracting dates:
       if (existing.hammer_clause === "unknown" && extracted.hammer_clause && extracted.hammer_clause !== "unknown") {
         updates.hammer_clause = extracted.hammer_clause;
       }
+      // New fields: always update if extracted and missing
+      if (!existing.gl_per_occurrence_limit && extracted.gl_per_occurrence_limit) {
+        updates.gl_per_occurrence_limit = extracted.gl_per_occurrence_limit;
+      }
+      if (!existing.gl_aggregate_limit && extracted.gl_aggregate_limit) {
+        updates.gl_aggregate_limit = extracted.gl_aggregate_limit;
+      }
+      if (!existing.umbrella_policy_number && extracted.umbrella_policy_number) {
+        updates.umbrella_policy_number = extracted.umbrella_policy_number;
+        updates.umbrella_carrier = extracted.umbrella_carrier || null;
+        updates.umbrella_limit = extracted.umbrella_limit || null;
+        updates.umbrella_effective_date = extracted.umbrella_effective_date || null;
+        updates.umbrella_expiration_date = extracted.umbrella_expiration_date || null;
+      }
+      if ((!existing.certificate_holder || existing.certificate_holder === 'unknown') && extracted.certificate_holder) {
+        updates.certificate_holder = extracted.certificate_holder;
+      }
+      if (!existing.description_of_operations && extracted.description_of_operations) {
+        updates.description_of_operations = extracted.description_of_operations;
+      }
 
       if (Object.keys(updates).length > 0) {
         const { data, error } = await supabase
@@ -243,6 +276,13 @@ CRITICAL INSTRUCTIONS for extracting dates:
           gl_effective_date: extracted.gl_effective_date || null,
           gl_expiration_date: extracted.gl_expiration_date || null,
           gl_coverage_limit: extracted.gl_coverage_limit || null,
+          gl_per_occurrence_limit: extracted.gl_per_occurrence_limit || null,
+          gl_aggregate_limit: extracted.gl_aggregate_limit || null,
+          umbrella_policy_number: extracted.umbrella_policy_number || null,
+          umbrella_carrier: extracted.umbrella_carrier || null,
+          umbrella_limit: extracted.umbrella_limit || null,
+          umbrella_effective_date: extracted.umbrella_effective_date || null,
+          umbrella_expiration_date: extracted.umbrella_expiration_date || null,
           wc_policy_number: extracted.wc_policy_number || null,
           wc_carrier: extracted.wc_carrier || null,
           wc_effective_date: extracted.wc_effective_date || null,
@@ -250,6 +290,8 @@ CRITICAL INSTRUCTIONS for extracting dates:
           labor_law_coverage: extracted.labor_law_coverage || "unknown",
           action_over: extracted.action_over || "unknown",
           hammer_clause: extracted.hammer_clause || "unknown",
+          certificate_holder: extracted.certificate_holder || "unknown",
+          description_of_operations: extracted.description_of_operations || null,
           coi_file_path: filePath,
         })
         .select()
@@ -264,6 +306,44 @@ CRITICAL INSTRUCTIONS for extracting dates:
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    }
+
+    // Auto-verify additional insured and certificate holder against GC settings
+    const coiId = coi?.id;
+    if (coiId) {
+      try {
+        const { data: gcSettings } = await supabase
+          .from("gc_settings")
+          .select("company_name, property_address, owner_info")
+          .limit(1)
+          .maybeSingle();
+
+        if (gcSettings?.company_name) {
+          const desc = (extracted.description_of_operations || "").toUpperCase();
+          const certHolder = (extracted.certificate_holder || "").toUpperCase();
+          const gcName = gcSettings.company_name.toUpperCase();
+
+          // Check additional insured: company name must appear in description
+          const aiConfirmed = desc.includes(gcName);
+
+          // Check certificate holder matches GC name
+          const certHolderMatch = certHolder.includes(gcName) ? "confirmed" : "unconfirmed";
+
+          const verifyUpdates: Record<string, unknown> = {
+            additional_insured: aiConfirmed ? "confirmed" : "unconfirmed",
+            certificate_holder: certHolderMatch === "confirmed"
+              ? `${extracted.certificate_holder || ""} ✓`
+              : extracted.certificate_holder || "unknown",
+          };
+
+          await supabase
+            .from("subcontractor_cois")
+            .update(verifyUpdates)
+            .eq("id", coiId);
+        }
+      } catch (verifyErr) {
+        console.error("Verification check error (non-fatal):", verifyErr);
+      }
     }
 
     return new Response(JSON.stringify({ success: true, coi, extracted }), {

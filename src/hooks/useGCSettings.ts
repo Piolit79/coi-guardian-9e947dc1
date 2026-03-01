@@ -7,6 +7,9 @@ export interface GCSettings {
   min_gl_coverage_limit: string;
   wc_required: boolean;
   additional_insured_required: boolean;
+  company_name: string;
+  property_address: string | null;
+  owner_info: string | null;
 }
 
 export function useGCSettings() {

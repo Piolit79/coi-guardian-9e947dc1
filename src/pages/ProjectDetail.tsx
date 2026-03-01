@@ -191,9 +191,14 @@ export default function ProjectDetail() {
                       </div>
                       <div className="space-y-2 rounded-md bg-muted/30 p-3">
                         <CoverageComplianceCheck
-                          label="Coverage Limit"
-                          value={selectedCOI.glPolicy.coverageLimit}
+                          label="Each Occurrence"
+                          value={selectedCOI.glPolicy.perOccurrenceLimit || selectedCOI.glPolicy.coverageLimit}
                           minValue={settings?.min_gl_coverage_limit || ''}
+                        />
+                        <CoverageComplianceCheck
+                          label="General Aggregate"
+                          value={selectedCOI.glPolicy.aggregateLimit || 'N/A'}
+                          minValue=""
                         />
                         <div className="flex items-center justify-between text-xs">
                           <span className="text-muted-foreground">Additional Insured</span>
@@ -208,7 +213,39 @@ export default function ProjectDetail() {
                             )}
                           </div>
                         </div>
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-muted-foreground">Certificate Holder</span>
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-medium text-foreground truncate max-w-[200px]">{selectedCOI.certificate_holder || 'unknown'}</span>
+                            {(selectedCOI.certificate_holder || '').includes('✓') ? (
+                              <CheckCircle2 className="h-3.5 w-3.5 text-status-valid" />
+                            ) : selectedCOI.certificate_holder && selectedCOI.certificate_holder !== 'unknown' ? (
+                              <XCircle className="h-3.5 w-3.5 text-status-expired" />
+                            ) : null}
+                          </div>
+                        </div>
                       </div>
+                    </div>
+                  )}
+
+                  {/* Umbrella / Excess */}
+                  {selectedCOI.umbrellaPolicy && (
+                    <div className="rounded-lg border border-border p-4">
+                      <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Umbrella / Excess Liability</h4>
+                      <div className="grid grid-cols-2 gap-3 text-sm">
+                        <div><span className="text-xs text-muted-foreground">Policy #</span><p className="font-mono text-xs font-medium text-foreground">{selectedCOI.umbrellaPolicy.policyNumber}</p></div>
+                        <div><span className="text-xs text-muted-foreground">Carrier</span><p className="text-xs font-medium text-foreground">{selectedCOI.umbrellaPolicy.carrier}</p></div>
+                        <div><span className="text-xs text-muted-foreground">Limit</span><p className="text-xs font-semibold text-foreground">{selectedCOI.umbrellaPolicy.limit}</p></div>
+                        <div><span className="text-xs text-muted-foreground">Period</span><p className="text-xs font-medium text-foreground">{selectedCOI.umbrellaPolicy.effectiveDate} — {selectedCOI.umbrellaPolicy.expirationDate}</p></div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Description of Operations */}
+                  {selectedCOI.description_of_operations && (
+                    <div className="rounded-lg border border-border p-4">
+                      <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Description of Operations</h4>
+                      <p className="text-xs text-foreground whitespace-pre-wrap">{selectedCOI.description_of_operations}</p>
                     </div>
                   )}
 

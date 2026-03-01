@@ -40,6 +40,11 @@ export function ComplianceBadge({ coi, className }: ComplianceBadgeProps) {
     issues.push('Additional Insured not confirmed');
   }
 
+  // Check certificate holder
+  if (coi.certificate_holder && !coi.certificate_holder.includes('✓') && coi.certificate_holder !== 'unknown') {
+    issues.push('Certificate Holder mismatch');
+  }
+
   if (issues.length === 0) {
     return (
       <Tooltip>
