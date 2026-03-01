@@ -9,7 +9,12 @@ const STORAGE_PREFIX_REGEX = /^(uploads\/|agreements\/|policies\/)/i;
 
 function toAbsoluteStorageUrl(signedUrl: string): string {
   if (signedUrl.startsWith('http')) return signedUrl;
-  return `${import.meta.env.VITE_SUPABASE_URL}/storage/v1${signedUrl.startsWith('/') ? signedUrl : `/${signedUrl}`}`;
+
+  const baseUrl = (import.meta.env.VITE_SUPABASE_URL || '').replace(/\/$/, '');
+  if (signedUrl.startsWith('/storage/v1/')) return `${baseUrl}${signedUrl}`;
+  if (signedUrl.startsWith('storage/v1/')) return `${baseUrl}/${signedUrl}`;
+
+  return `${baseUrl}/storage/v1${signedUrl.startsWith('/') ? signedUrl : `/${signedUrl}`}`;
 }
 
 function getPathCandidates(filePath: string): string[] {
