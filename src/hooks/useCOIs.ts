@@ -108,6 +108,8 @@ export function useProjectCOIs(projectId: string | undefined) {
 export function useAllCOIs() {
   return useQuery({
     queryKey: ['cois', 'all'],
+    staleTime: 0,
+    refetchOnMount: 'always',
     queryFn: async (): Promise<(COI & { project_id: string })[]> => {
       const { data, error } = await supabase
         .from('subcontractor_cois')
