@@ -156,3 +156,22 @@ export function useCreateCOI() {
     },
   });
 }
+
+export function useDeleteCOI() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, projectId }: { id: string; projectId: string }) => {
+      const { error } = await supabase
+        .from('subcontractor_cois')
+        .delete()
+        .eq('id', id);
+      if (error) throw error;
+      return { projectId };
+    },
+    onSuccess: (_data, vars) => {
+      qc.invalidateQueries({ queryKey: ['cois', vars.projectId] });
+      qc.invalidateQueries({ queryKey: ['cois', 'all'] });
+      qc.invalidateQueries({ queryKey: ['projects'] });
+    },
+  });
+}
