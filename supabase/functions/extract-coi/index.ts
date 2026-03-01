@@ -327,13 +327,11 @@ CRITICAL INSTRUCTIONS for extracting data:
           const aiConfirmed = desc.includes(gcName);
 
           // Check certificate holder matches GC name
-          const certHolderMatch = certHolder.includes(gcName) ? "confirmed" : "unconfirmed";
+          const certHolderMatch = certHolder.includes(gcName);
 
           const verifyUpdates: Record<string, unknown> = {
             additional_insured: aiConfirmed ? "confirmed" : "unconfirmed",
-            certificate_holder: certHolderMatch === "confirmed"
-              ? `${extracted.certificate_holder || ""} ✓`
-              : extracted.certificate_holder || "unknown",
+            certificate_holder: extracted.certificate_holder || "unknown",
           };
 
           await supabase

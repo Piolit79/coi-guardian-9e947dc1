@@ -217,7 +217,7 @@ export default function ProjectDetail() {
                           <span className="text-muted-foreground">Certificate Holder</span>
                           <div className="flex items-center gap-1.5">
                             <span className="font-medium text-foreground">SLAB Builders, LLC</span>
-                            {selectedCOI.additional_insured === 'confirmed' || (selectedCOI.certificate_holder || '').includes('✓') ? (
+                            {(selectedCOI.certificate_holder || '').toUpperCase().includes('SLAB') ? (
                               <CheckCircle2 className="h-3.5 w-3.5 text-status-valid" />
                             ) : selectedCOI.certificate_holder && selectedCOI.certificate_holder !== 'unknown' ? (
                               <XCircle className="h-3.5 w-3.5 text-status-expired" />
