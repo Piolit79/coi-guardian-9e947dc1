@@ -57,8 +57,13 @@ const Index = () => {
   const [selectedCOI, setSelectedCOI] = useState<(COI & { project_id?: string }) | null>(null);
 
   const openFile = async (filePath: string) => {
+    const newTab = window.open('', '_blank');
     const { data } = await supabase.storage.from('certificates').createSignedUrl(filePath, 300);
-    if (data?.signedUrl) window.open(data.signedUrl, '_blank');
+    if (data?.signedUrl && newTab) {
+      newTab.location.href = data.signedUrl;
+    } else {
+      newTab?.close();
+    }
   };
 
   const toggleProject = (id: string) => {

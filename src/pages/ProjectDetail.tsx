@@ -53,15 +53,19 @@ function FileViewButton({ filePath, label }: { filePath: string; label: string }
 
   const openFile = async () => {
     setLoading(true);
+    const newTab = window.open('', '_blank');
     try {
       const { data } = await supabase.storage
         .from('certificates')
         .createSignedUrl(filePath, 300);
-      if (data?.signedUrl) {
-        window.open(data.signedUrl, '_blank');
+      if (data?.signedUrl && newTab) {
+        newTab.location.href = data.signedUrl;
+      } else {
+        newTab?.close();
       }
     } catch (e) {
       console.error(e);
+      newTab?.close();
     } finally {
       setLoading(false);
     }
