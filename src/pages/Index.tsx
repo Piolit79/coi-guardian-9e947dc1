@@ -88,23 +88,15 @@ const Index = () => {
   const dashboardCois = useMemo(() => {
     const latestBySubcontractor = new Map<string, COI & { project_id: string }>();
 
+    // useAllCOIs is already ordered by created_at desc, so first seen = latest record
     (allCois || []).forEach((coi) => {
       const subcontractorKey = (coi.subcontractor || '')
         .trim()
         .toLowerCase()
         .replace(/\s+/g, ' ');
       const key = `${coi.project_id}:${subcontractorKey}`;
-      const existing = latestBySubcontractor.get(key);
 
-      if (!existing) {
-        latestBySubcontractor.set(key, coi);
-        return;
-      }
-
-      const candidateScore = coi.daysUntilExpiry ?? -9999;
-      const existingScore = existing.daysUntilExpiry ?? -9999;
-
-      if (candidateScore > existingScore) {
+      if (!latestBySubcontractor.has(key)) {
         latestBySubcontractor.set(key, coi);
       }
     });
