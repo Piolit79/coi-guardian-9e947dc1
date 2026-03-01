@@ -12,8 +12,18 @@ export interface GLPolicy {
   effectiveDate: string;
   expirationDate: string;
   coverageLimit: string;
+  perOccurrenceLimit: string;
+  aggregateLimit: string;
   provisions: CoverageProvision[];
   fileUrl?: string;
+}
+
+export interface UmbrellaPolicy {
+  policyNumber: string;
+  carrier: string;
+  limit: string;
+  effectiveDate: string;
+  expirationDate: string;
 }
 
 export interface WCPolicy {
@@ -39,10 +49,14 @@ export interface COI {
   glPolicy?: GLPolicy;
   // Workers' Comp
   wcPolicy?: WCPolicy;
+  // Umbrella
+  umbrellaPolicy?: UmbrellaPolicy;
   // File paths
   gl_policy_file_path?: string | null;
   coi_file_path?: string | null;
   additional_insured?: string;
+  certificate_holder?: string;
+  description_of_operations?: string;
 }
 
 export interface Project {

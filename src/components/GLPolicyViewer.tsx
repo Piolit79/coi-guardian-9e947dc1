@@ -40,10 +40,14 @@ export function GLPolicyViewer({ policy, insuredName }: GLPolicyViewerProps & { 
           <p className="text-xs font-medium text-foreground">{policy.carrier}</p>
         </div>
         <div>
-          <span className="text-xs text-muted-foreground">Coverage Limit</span>
-          <p className="text-xs font-semibold text-foreground">{policy.coverageLimit}</p>
+          <span className="text-xs text-muted-foreground">Each Occurrence</span>
+          <p className="text-xs font-semibold text-foreground">{policy.perOccurrenceLimit || policy.coverageLimit}</p>
         </div>
         <div>
+          <span className="text-xs text-muted-foreground">General Aggregate</span>
+          <p className="text-xs font-semibold text-foreground">{policy.aggregateLimit || 'N/A'}</p>
+        </div>
+        <div className="col-span-2">
           <span className="text-xs text-muted-foreground">Period</span>
           <p className="text-xs font-medium text-foreground">{policy.effectiveDate} — {policy.expirationDate}</p>
         </div>

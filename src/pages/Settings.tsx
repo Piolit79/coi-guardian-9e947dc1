@@ -98,6 +98,48 @@ export default function Settings() {
           </div>
         </Card>
 
+        {/* GC Identity - for COI verification */}
+        <Card className="border border-border p-6 mb-6">
+          <h2 className="text-sm font-semibold text-foreground mb-4">
+            GC Identity (for COI Verification)
+          </h2>
+          <p className="text-xs text-muted-foreground mb-4">
+            New COI uploads will be checked to confirm this company is listed as Additional Insured and Certificate Holder.
+          </p>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="company-name" className="text-xs">Company Name</Label>
+              <Input
+                id="company-name"
+                type="text"
+                placeholder="e.g. SLAB Builders"
+                defaultValue={settings?.company_name || ''}
+                onBlur={(e) => updateSettings.mutate({ company_name: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="property-address" className="text-xs">Property Address</Label>
+              <Input
+                id="property-address"
+                type="text"
+                placeholder="e.g. 123 Main St, New York, NY"
+                defaultValue={settings?.property_address || ''}
+                onBlur={(e) => updateSettings.mutate({ property_address: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="owner-info" className="text-xs">Owner Info</Label>
+              <Input
+                id="owner-info"
+                type="text"
+                placeholder="e.g. ABC Development Corp"
+                defaultValue={settings?.owner_info || ''}
+                onBlur={(e) => updateSettings.mutate({ owner_info: e.target.value })}
+              />
+            </div>
+          </div>
+        </Card>
+
         {/* Minimum Requirements */}
         <Card className="border border-border p-6">
           <h2 className="text-sm font-semibold text-foreground mb-4">
@@ -140,7 +182,7 @@ export default function Settings() {
               <div>
                 <Label className="text-xs">Additional Insured Required</Label>
                 <p className="text-[11px] text-muted-foreground mt-0.5">
-                  GC must be listed as additional insured
+                  GC must be listed as additional insured in the Description section
                 </p>
               </div>
               <Switch

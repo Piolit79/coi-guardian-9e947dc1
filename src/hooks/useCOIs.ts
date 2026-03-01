@@ -58,6 +58,8 @@ function dbCoiToAppCoi(row: DBCoi): COI {
       effectiveDate: formatDate(row.gl_effective_date),
       expirationDate: formatDate(row.gl_expiration_date),
       coverageLimit: row.gl_coverage_limit || '',
+      perOccurrenceLimit: (row as any).gl_per_occurrence_limit || row.gl_coverage_limit || '',
+      aggregateLimit: (row as any).gl_aggregate_limit || '',
       provisions: [
         { name: 'Labor Law Coverage', status: row.labor_law_coverage as any },
         { name: 'Action Over', status: row.action_over as any },
@@ -75,6 +77,15 @@ function dbCoiToAppCoi(row: DBCoi): COI {
     gl_policy_file_path: row.gl_policy_file_path,
     coi_file_path: row.coi_file_path,
     additional_insured: (row as any).additional_insured || 'unknown',
+    certificate_holder: (row as any).certificate_holder || 'unknown',
+    description_of_operations: (row as any).description_of_operations || '',
+    umbrellaPolicy: (row as any).umbrella_policy_number ? {
+      policyNumber: (row as any).umbrella_policy_number,
+      carrier: (row as any).umbrella_carrier || '',
+      limit: (row as any).umbrella_limit || '',
+      effectiveDate: formatDate((row as any).umbrella_effective_date),
+      expirationDate: formatDate((row as any).umbrella_expiration_date),
+    } : undefined,
   };
 }
 

@@ -17,6 +17,8 @@ export const mockCOIs: COI[] = [
       effectiveDate: '2025-01-15',
       expirationDate: '2026-01-15',
       coverageLimit: '$2,000,000',
+      perOccurrenceLimit: '$1,000,000',
+      aggregateLimit: '$2,000,000',
       provisions: [
         { name: 'Labor Law Coverage', status: 'included', details: 'Full NY Labor Law §240, §241' },
         { name: 'Action Over', status: 'included', details: 'Included with $1M sublimit' },
@@ -50,6 +52,8 @@ export const mockCOIs: COI[] = [
       effectiveDate: '2025-06-01',
       expirationDate: '2026-04-10',
       coverageLimit: '$1,000,000',
+      perOccurrenceLimit: '$1,000,000',
+      aggregateLimit: '$2,000,000',
       provisions: [
         { name: 'Labor Law Coverage', status: 'excluded' },
         { name: 'Action Over', status: 'excluded' },
@@ -102,6 +106,8 @@ export const mockCOIs: COI[] = [
       effectiveDate: '2025-08-15',
       expirationDate: '2026-08-15',
       coverageLimit: '$3,000,000',
+      perOccurrenceLimit: '$1,000,000',
+      aggregateLimit: '$3,000,000',
       provisions: [
         { name: 'Labor Law Coverage', status: 'included', details: 'Full coverage with no exclusions' },
         { name: 'Action Over', status: 'included', details: 'Full action over coverage' },
