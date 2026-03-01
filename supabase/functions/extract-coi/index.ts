@@ -32,7 +32,7 @@ serve(async (req) => {
     }
 
     // Upload file to storage
-    const filePath = `${projectId}/${Date.now()}_${file.name}`;
+    const filePath = `uploads/coi/${projectId}/${Date.now()}_${file.name}`;
     const arrayBuffer = await file.arrayBuffer();
     const { error: uploadError } = await supabase.storage
       .from("certificates")
