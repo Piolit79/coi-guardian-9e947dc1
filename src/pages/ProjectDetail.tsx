@@ -1,12 +1,13 @@
 import { useParams, Link } from 'react-router-dom';
 import { AppLayout } from '@/components/AppLayout';
-import { mockProjects } from '@/data/mockData';
+import { useProject } from '@/hooks/useProjects';
+import { useProjectCOIs } from '@/hooks/useCOIs';
 import { COICard } from '@/components/COICard';
 import { DropZone } from '@/components/DropZone';
 import { GLPolicyViewer } from '@/components/GLPolicyViewer';
-import { Button } from '@/components/ui/button';
+import { CreateCOIDialog } from '@/components/CreateCOIDialog';
 import { Card } from '@/components/ui/card';
-import { ArrowLeft, MapPin } from 'lucide-react';
+import { ArrowLeft, MapPin, Loader2 } from 'lucide-react';
 import { COI } from '@/types/coi';
 import { useState } from 'react';
 import {
@@ -19,8 +20,19 @@ import { StatusBadge } from '@/components/StatusBadge';
 
 export default function ProjectDetail() {
   const { id } = useParams();
-  const project = mockProjects.find(p => p.id === id);
+  const { data: project, isLoading: projLoading } = useProject(id);
+  const { data: cois, isLoading: coisLoading } = useProjectCOIs(id);
   const [selectedCOI, setSelectedCOI] = useState<COI | null>(null);
+
+  if (projLoading) {
+    return (
+      <AppLayout>
+        <div className="flex items-center justify-center h-screen">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </div>
+      </AppLayout>
+    );
+  }
 
   if (!project) {
     return (
@@ -35,51 +47,48 @@ export default function ProjectDetail() {
   return (
     <AppLayout>
       <div className="p-6 lg:p-8 max-w-7xl">
-        {/* Back link */}
         <Link to="/projects" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-6 transition-colors">
-          <ArrowLeft className="h-4 w-4" />
-          Back to Projects
+          <ArrowLeft className="h-4 w-4" />Back to Projects
         </Link>
 
-        {/* Header */}
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-foreground">{project.name}</h1>
           <p className="text-sm text-muted-foreground mt-1">{project.client}</p>
-          <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
-            <MapPin className="h-3 w-3" />
-            {project.address}
-          </div>
+          {project.address && (
+            <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
+              <MapPin className="h-3 w-3" />{project.address}
+            </div>
+          )}
         </div>
 
-        {/* Drop zone */}
         <DropZone 
           className="mb-8" 
-          onFilesDropped={(files) => {
-            console.log('Files dropped:', files.map(f => f.name));
-          }} 
+          onFilesDropped={(files) => console.log('Files dropped:', files.map(f => f.name))} 
         />
 
-        {/* COI List */}
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-sm font-semibold text-foreground">
-            Certificates of Insurance ({project.cois.length})
+            Certificates of Insurance ({(cois || []).length})
           </h2>
-          <Button variant="outline" size="sm">Add COI Manually</Button>
+          <CreateCOIDialog projectId={project.id} />
         </div>
 
-        {project.cois.length > 0 ? (
+        {coisLoading ? (
+          <div className="flex justify-center py-8">
+            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+          </div>
+        ) : (cois || []).length > 0 ? (
           <div className="grid gap-3 sm:grid-cols-2">
-            {project.cois.map((coi) => (
+            {(cois || []).map((coi) => (
               <COICard key={coi.id} coi={coi} onClick={setSelectedCOI} />
             ))}
           </div>
         ) : (
           <Card className="border border-dashed border-border p-8 text-center">
-            <p className="text-sm text-muted-foreground">No COIs uploaded yet. Drag and drop certificates above to get started.</p>
+            <p className="text-sm text-muted-foreground">No COIs yet. Click "Add COI" or drag and drop certificates above.</p>
           </Card>
         )}
 
-        {/* COI Detail Dialog */}
         <Dialog open={!!selectedCOI} onOpenChange={() => setSelectedCOI(null)}>
           <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
             {selectedCOI && (
@@ -90,30 +99,31 @@ export default function ProjectDetail() {
                     <StatusBadge status={selectedCOI.status} daysUntilExpiry={selectedCOI.daysUntilExpiry} />
                   </DialogTitle>
                 </DialogHeader>
-
                 <div className="space-y-4 mt-2">
                   <div className="grid grid-cols-2 gap-3 text-sm">
-                    <div>
-                      <span className="text-xs text-muted-foreground">Subcontractor</span>
-                      <p className="font-medium text-foreground">{selectedCOI.subcontractor}</p>
-                    </div>
-                    <div>
-                      <span className="text-xs text-muted-foreground">Carrier</span>
-                      <p className="font-medium text-foreground">{selectedCOI.carrier}</p>
-                    </div>
-                    <div>
-                      <span className="text-xs text-muted-foreground">Policy Number</span>
-                      <p className="font-mono text-xs font-medium text-foreground">{selectedCOI.policyNumber}</p>
-                    </div>
-                    <div>
-                      <span className="text-xs text-muted-foreground">Expiration</span>
-                      <p className="font-medium text-foreground">{selectedCOI.expirationDate}</p>
-                    </div>
+                    <div><span className="text-xs text-muted-foreground">Subcontractor</span><p className="font-medium text-foreground">{selectedCOI.subcontractor}</p></div>
+                    <div><span className="text-xs text-muted-foreground">Carrier</span><p className="font-medium text-foreground">{selectedCOI.carrier}</p></div>
+                    <div><span className="text-xs text-muted-foreground">Policy Number</span><p className="font-mono text-xs font-medium text-foreground">{selectedCOI.policyNumber}</p></div>
+                    <div><span className="text-xs text-muted-foreground">Expiration</span><p className="font-medium text-foreground">{selectedCOI.expirationDate}</p></div>
                   </div>
-
-                  {selectedCOI.glPolicy && (
-                    <GLPolicyViewer policy={selectedCOI.glPolicy} />
+                  {selectedCOI.wcPolicy && (
+                    <div className="rounded-lg border border-border p-4">
+                      <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Workers' Compensation</h4>
+                      <div className="grid grid-cols-2 gap-3 text-sm">
+                        <div><span className="text-xs text-muted-foreground">WC Policy #</span><p className="font-mono text-xs font-medium text-foreground">{selectedCOI.wcPolicy.policyNumber}</p></div>
+                        <div><span className="text-xs text-muted-foreground">WC Carrier</span><p className="text-xs font-medium text-foreground">{selectedCOI.wcPolicy.carrier}</p></div>
+                        <div><span className="text-xs text-muted-foreground">Effective</span><p className="text-xs font-medium text-foreground">{selectedCOI.wcPolicy.effectiveDate}</p></div>
+                        <div>
+                          <span className="text-xs text-muted-foreground">WC Expiration</span>
+                          <div className="flex items-center gap-2">
+                            <p className="text-xs font-medium text-foreground">{selectedCOI.wcPolicy.expirationDate}</p>
+                            <StatusBadge status={selectedCOI.wcPolicy.status} daysUntilExpiry={selectedCOI.wcPolicy.daysUntilExpiry} />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   )}
+                  {selectedCOI.glPolicy && <GLPolicyViewer policy={selectedCOI.glPolicy} />}
                 </div>
               </>
             )}
