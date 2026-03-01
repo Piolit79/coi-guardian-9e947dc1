@@ -1,7 +1,16 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { COI, COIStatus, getStatusFromDays } from '@/types/coi';
-import { differenceInDays } from 'date-fns';
+import { differenceInDays, format, parseISO } from 'date-fns';
+
+function formatDate(dateStr: string | null): string {
+  if (!dateStr) return '';
+  try {
+    return format(parseISO(dateStr), 'MM/dd/yyyy');
+  } catch {
+    return dateStr;
+  }
+}
 
 export interface DBCoi {
   id: string;
@@ -39,15 +48,15 @@ function dbCoiToAppCoi(row: DBCoi): COI {
     company: row.company,
     policyNumber: row.gl_policy_number || '',
     carrier: row.gl_carrier || '',
-    effectiveDate: row.gl_effective_date || '',
-    expirationDate: row.gl_expiration_date || '',
+    effectiveDate: formatDate(row.gl_effective_date),
+    expirationDate: formatDate(row.gl_expiration_date),
     status: glExpDate ? getStatusFromDays(glDays) : 'expired',
     daysUntilExpiry: glDays,
     glPolicy: row.gl_policy_number ? {
       policyNumber: row.gl_policy_number,
       carrier: row.gl_carrier || '',
-      effectiveDate: row.gl_effective_date || '',
-      expirationDate: row.gl_expiration_date || '',
+      effectiveDate: formatDate(row.gl_effective_date),
+      expirationDate: formatDate(row.gl_expiration_date),
       coverageLimit: row.gl_coverage_limit || '',
       provisions: [
         { name: 'Labor Law Coverage', status: row.labor_law_coverage as any },
@@ -58,8 +67,8 @@ function dbCoiToAppCoi(row: DBCoi): COI {
     wcPolicy: row.wc_policy_number ? {
       policyNumber: row.wc_policy_number,
       carrier: row.wc_carrier || '',
-      effectiveDate: row.wc_effective_date || '',
-      expirationDate: row.wc_expiration_date || '',
+      effectiveDate: formatDate(row.wc_effective_date),
+      expirationDate: formatDate(row.wc_expiration_date),
       status: wcExpDate ? getStatusFromDays(wcDays) : 'expired',
       daysUntilExpiry: wcDays,
     } : undefined,
