@@ -40,7 +40,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { supabase } from '@/integrations/supabase/client';
+import { createSignedFileUrl } from '@/lib/storageFile';
 import { parseISO, format, isValid } from 'date-fns';
 
 const projectStatusStyles: Record<string, string> = {
@@ -58,14 +58,8 @@ const Index = () => {
 
   const openFile = async (filePath: string) => {
     try {
-      const { data } = await supabase.storage.from('certificates').createSignedUrl(filePath, 300);
-      const signed = (data as any)?.signedUrl || (data as any)?.signedURL;
-      if (signed) {
-        const signedUrl = signed.startsWith('http')
-          ? signed
-          : `${import.meta.env.VITE_SUPABASE_URL}/storage/v1${signed.startsWith('/') ? signed : `/${signed}`}`;
-        window.location.href = signedUrl;
-      }
+      const { url } = await createSignedFileUrl(filePath, 300);
+      window.location.href = url;
     } catch (e) {
       console.error(e);
     }
