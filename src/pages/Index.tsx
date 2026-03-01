@@ -85,20 +85,47 @@ const Index = () => {
     });
   };
 
-  const validCount = (allCois || []).filter(c => c.status === 'valid').length;
-  const expiringCount = (allCois || []).filter(c => c.status === 'expiring').length;
-  const expiredCount = (allCois || []).filter(c => c.status === 'expired').length;
+  const dashboardCois = useMemo(() => {
+    const latestBySubcontractor = new Map<string, COI & { project_id: string }>();
+
+    (allCois || []).forEach((coi) => {
+      const subcontractorKey = (coi.subcontractor || '')
+        .trim()
+        .toLowerCase()
+        .replace(/\s+/g, ' ');
+      const key = `${coi.project_id}:${subcontractorKey}`;
+      const existing = latestBySubcontractor.get(key);
+
+      if (!existing) {
+        latestBySubcontractor.set(key, coi);
+        return;
+      }
+
+      const candidateScore = coi.daysUntilExpiry ?? -9999;
+      const existingScore = existing.daysUntilExpiry ?? -9999;
+
+      if (candidateScore > existingScore) {
+        latestBySubcontractor.set(key, coi);
+      }
+    });
+
+    return Array.from(latestBySubcontractor.values());
+  }, [allCois]);
+
+  const validCount = dashboardCois.filter(c => c.status === 'valid').length;
+  const expiringCount = dashboardCois.filter(c => c.status === 'expiring').length;
+  const expiredCount = dashboardCois.filter(c => c.status === 'expired').length;
   const activeProjects = (projects || []).filter(p => p.status === 'active').length;
 
   // Alerts: expiring + expired COIs
-  const alerts = (allCois || [])
+  const alerts = dashboardCois
     .filter(c => c.status === 'expiring' || c.status === 'expired')
     .sort((a, b) => a.daysUntilExpiry - b.daysUntilExpiry);
 
   // Calendar: group expirations by month (key: 'YYYY-MM')
   const expirationsByMonth = useMemo(() => {
     const monthMap = new Map<string, { cois: (COI & { project_id: string })[], expired: number, expiring: number, valid: number }>();
-    (allCois || []).forEach(coi => {
+    dashboardCois.forEach(coi => {
       if (!coi.expirationDate) return;
       const parts = coi.expirationDate.split('/');
       if (parts.length !== 3) return;
@@ -113,7 +140,7 @@ const Index = () => {
       monthMap.set(key, existing);
     });
     return monthMap;
-  }, [allCois]);
+  }, [dashboardCois]);
 
   const [calendarYear, setCalendarYear] = useState(new Date().getFullYear());
   const [selectedMonth, setSelectedMonth] = useState<string | null>(null);
@@ -133,7 +160,7 @@ const Index = () => {
   ];
 
   // Group COIs by project
-  const coisByProject = (allCois || []).reduce<Record<string, (COI & { project_id: string })[]>>((acc, coi) => {
+  const coisByProject = dashboardCois.reduce<Record<string, (COI & { project_id: string })[]>>((acc, coi) => {
     (acc[coi.project_id] = acc[coi.project_id] || []).push(coi);
     return acc;
   }, {});
