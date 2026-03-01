@@ -8,7 +8,7 @@ interface StatusBadgeProps {
 }
 
 const statusConfig = {
-  valid: { label: 'Valid', className: 'bg-status-valid-bg text-status-valid' },
+  valid: { label: 'Current', className: 'bg-status-valid-bg text-status-valid' },
   expiring: { label: 'Expiring Soon', className: 'bg-status-warning-bg text-status-warning animate-pulse-warning' },
   expired: { label: 'Expired', className: 'bg-status-expired-bg text-status-expired' },
 };
