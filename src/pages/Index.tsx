@@ -8,7 +8,7 @@ import { StatusBadge } from '@/components/StatusBadge';
 import { ComplianceBadge } from '@/components/ComplianceBadge';
 import { PolicyUploadButton } from '@/components/PolicyUploadButton';
 import { PolicyReviewDialog } from '@/components/PolicyReviewDialog';
-import { Calendar } from '@/components/ui/calendar';
+
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   ChevronDown,
@@ -80,42 +80,35 @@ const Index = () => {
     .filter(c => c.status === 'expiring' || c.status === 'expired')
     .sort((a, b) => a.daysUntilExpiry - b.daysUntilExpiry);
 
-  // Calendar: parse expiration dates for highlighting
-  const expirationDates = useMemo(() => {
-    const dateMap = new Map<string, { cois: (COI & { project_id: string })[], status: 'expired' | 'expiring' | 'valid' }>();
+  // Calendar: group expirations by month (key: 'YYYY-MM')
+  const expirationsByMonth = useMemo(() => {
+    const monthMap = new Map<string, { cois: (COI & { project_id: string })[], expired: number, expiring: number, valid: number }>();
     (allCois || []).forEach(coi => {
       if (!coi.expirationDate) return;
-      // Parse MM/dd/yyyy format
       const parts = coi.expirationDate.split('/');
       if (parts.length !== 3) return;
       const d = new Date(parseInt(parts[2]), parseInt(parts[0]) - 1, parseInt(parts[1]));
       if (!isValid(d)) return;
-      const key = format(d, 'yyyy-MM-dd');
-      const existing = dateMap.get(key);
-      if (existing) {
-        existing.cois.push(coi);
-        if (coi.status === 'expired') existing.status = 'expired';
-        else if (coi.status === 'expiring' && existing.status !== 'expired') existing.status = 'expiring';
-      } else {
-        dateMap.set(key, { cois: [coi], status: coi.status });
-      }
+      const key = format(d, 'yyyy-MM');
+      const existing = monthMap.get(key) || { cois: [], expired: 0, expiring: 0, valid: 0 };
+      existing.cois.push(coi);
+      if (coi.status === 'expired') existing.expired++;
+      else if (coi.status === 'expiring') existing.expiring++;
+      else existing.valid++;
+      monthMap.set(key, existing);
     });
-    return dateMap;
+    return monthMap;
   }, [allCois]);
 
-  const expDatesArray = useMemo(() => 
-    Array.from(expirationDates.keys()).map(k => new Date(k + 'T00:00:00')),
-    [expirationDates]
-  );
+  const [calendarYear, setCalendarYear] = useState(new Date().getFullYear());
+  const [selectedMonth, setSelectedMonth] = useState<string | null>(null);
 
-  const [calendarMonth, setCalendarMonth] = useState<Date>(new Date());
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>();
+  const selectedMonthCois = useMemo(() => {
+    if (!selectedMonth) return [];
+    return expirationsByMonth.get(selectedMonth)?.cois || [];
+  }, [selectedMonth, expirationsByMonth]);
 
-  const selectedDateCois = useMemo(() => {
-    if (!selectedDate) return [];
-    const key = format(selectedDate, 'yyyy-MM-dd');
-    return expirationDates.get(key)?.cois || [];
-  }, [selectedDate, expirationDates]);
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
   const stats = [
     { label: 'Active Projects', value: activeProjects, icon: FolderKanban, color: 'text-primary', bg: 'bg-primary/10' },
@@ -206,32 +199,53 @@ const Index = () => {
               <CalendarDays className="h-4 w-4 text-primary" />
               <h2 className="text-sm font-semibold text-foreground">Expiration Calendar</h2>
             </div>
-            <Card className="border border-border p-2">
-              <Calendar
-                mode="single"
-                selected={selectedDate}
-                onSelect={setSelectedDate}
-                month={calendarMonth}
-                onMonthChange={setCalendarMonth}
-                className="p-1 pointer-events-auto"
-                modifiers={{
-                  expiring: expDatesArray,
-                }}
-                modifiersStyles={{
-                  expiring: {
-                    fontWeight: 700,
-                    textDecoration: 'underline',
-                    textDecorationColor: 'hsl(var(--status-warning))',
-                    textUnderlineOffset: '3px',
-                  },
-                }}
-              />
-              {selectedDateCois.length > 0 && (
-                <div className="border-t border-border px-3 py-2 space-y-1.5">
+            <Card className="border border-border p-3">
+              <div className="flex items-center justify-between mb-3">
+                <button onClick={() => setCalendarYear(y => y - 1)} className="text-muted-foreground hover:text-foreground transition-colors p-1">
+                  <ChevronRight className="h-4 w-4 rotate-180" />
+                </button>
+                <span className="text-sm font-semibold text-foreground">{calendarYear}</span>
+                <button onClick={() => setCalendarYear(y => y + 1)} className="text-muted-foreground hover:text-foreground transition-colors p-1">
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+              </div>
+              <div className="grid grid-cols-3 gap-1.5">
+                {months.map((m, i) => {
+                  const key = `${calendarYear}-${String(i + 1).padStart(2, '0')}`;
+                  const data = expirationsByMonth.get(key);
+                  const isSelected = selectedMonth === key;
+                  const hasIssues = data && (data.expired > 0 || data.expiring > 0);
+                  return (
+                    <button
+                      key={key}
+                      onClick={() => setSelectedMonth(isSelected ? null : key)}
+                      className={cn(
+                        "rounded-md px-2 py-2 text-xs font-medium transition-colors text-center",
+                        isSelected
+                          ? "bg-primary text-primary-foreground"
+                          : hasIssues
+                            ? "bg-status-warning-bg text-status-warning hover:bg-status-warning-bg/80"
+                            : data
+                              ? "bg-muted text-foreground hover:bg-muted/80"
+                              : "text-muted-foreground hover:bg-muted/50"
+                      )}
+                    >
+                      <span>{m}</span>
+                      {data && (
+                        <span className="block text-[10px] mt-0.5 font-normal">
+                          {data.cois.length} COI{data.cois.length !== 1 ? 's' : ''}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+              {selectedMonthCois.length > 0 && (
+                <div className="border-t border-border mt-3 pt-2 space-y-1.5">
                   <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">
-                    {format(selectedDate!, 'MMM d, yyyy')} — {selectedDateCois.length} expiring
+                    {months[parseInt(selectedMonth!.split('-')[1]) - 1]} {selectedMonth!.split('-')[0]} — {selectedMonthCois.length} expiring
                   </p>
-                  {selectedDateCois.map(coi => (
+                  {selectedMonthCois.map(coi => (
                     <button key={coi.id} onClick={() => setSelectedCOI(coi)} className="w-full flex items-center justify-between gap-2 rounded px-2 py-1.5 text-left hover:bg-muted/50 transition-colors">
                       <span className="text-xs font-medium text-foreground truncate">{coi.subcontractor}</span>
                       <StatusBadge status={coi.status} daysUntilExpiry={coi.daysUntilExpiry} />
