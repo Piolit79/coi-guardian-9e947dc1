@@ -1,1 +1,4 @@
 project_id = "rmgzjnmyvowdhhrdssdx"
+
+[functions.extract-coi]
+verify_jwt = false
