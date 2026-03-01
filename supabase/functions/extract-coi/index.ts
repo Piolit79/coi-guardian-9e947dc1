@@ -46,9 +46,17 @@ serve(async (req) => {
       });
     }
 
-    // Convert file to base64 for AI
+    // Convert file to base64 for AI (chunked to avoid stack overflow)
     const bytes = new Uint8Array(arrayBuffer);
-    const base64 = btoa(String.fromCharCode(...bytes));
+    const chunkSize = 8192;
+    let binary = "";
+    for (let i = 0; i < bytes.length; i += chunkSize) {
+      const chunk = bytes.subarray(i, Math.min(i + chunkSize, bytes.length));
+      for (let j = 0; j < chunk.length; j++) {
+        binary += String.fromCharCode(chunk[j]);
+      }
+    }
+    const base64 = btoa(binary);
     const mimeType = file.type || "application/pdf";
 
     // Call AI to extract COI data using tool calling
