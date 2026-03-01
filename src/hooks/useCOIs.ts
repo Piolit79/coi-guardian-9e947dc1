@@ -72,6 +72,9 @@ function dbCoiToAppCoi(row: DBCoi): COI {
       status: wcExpDate ? getStatusFromDays(wcDays) : 'expired',
       daysUntilExpiry: wcDays,
     } : undefined,
+    gl_policy_file_path: row.gl_policy_file_path,
+    coi_file_path: row.coi_file_path,
+    additional_insured: (row as any).additional_insured || 'unknown',
   };
 }
 

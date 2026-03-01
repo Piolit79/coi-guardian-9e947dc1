@@ -39,6 +39,10 @@ export interface COI {
   glPolicy?: GLPolicy;
   // Workers' Comp
   wcPolicy?: WCPolicy;
+  // File paths
+  gl_policy_file_path?: string | null;
+  coi_file_path?: string | null;
+  additional_insured?: string;
 }
 
 export interface Project {
