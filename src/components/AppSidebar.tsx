@@ -4,6 +4,7 @@ import {
   FolderKanban, 
   Bell, 
   Shield,
+  Settings,
   ChevronLeft,
   ChevronRight
 } from 'lucide-react';
@@ -14,6 +15,7 @@ const navItems = [
   { path: '/', icon: LayoutDashboard, label: 'Dashboard' },
   { path: '/projects', icon: FolderKanban, label: 'Projects' },
   { path: '/notifications', icon: Bell, label: 'Notifications' },
+  { path: '/settings', icon: Settings, label: 'Settings' },
 ];
 
 export function AppSidebar() {

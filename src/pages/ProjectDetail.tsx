@@ -6,6 +6,9 @@ import { COICard } from '@/components/COICard';
 import { DropZone } from '@/components/DropZone';
 import { GLPolicyViewer } from '@/components/GLPolicyViewer';
 import { CreateCOIDialog } from '@/components/CreateCOIDialog';
+import { PolicyUploadButton } from '@/components/PolicyUploadButton';
+import { PolicyReviewDialog } from '@/components/PolicyReviewDialog';
+import { ComplianceBadge } from '@/components/ComplianceBadge';
 import { Card } from '@/components/ui/card';
 import { ArrowLeft, MapPin, Loader2 } from 'lucide-react';
 import { COI } from '@/types/coi';
@@ -94,6 +97,7 @@ export default function ProjectDetail() {
                   <DialogTitle className="flex items-center gap-2">
                     {selectedCOI.subcontractor}
                     <StatusBadge status={selectedCOI.status} daysUntilExpiry={selectedCOI.daysUntilExpiry} />
+                    <ComplianceBadge coi={selectedCOI} />
                   </DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4 mt-2">
@@ -102,6 +106,31 @@ export default function ProjectDetail() {
                     <div><span className="text-xs text-muted-foreground">Policy Number</span><p className="font-mono text-xs font-medium text-foreground">{selectedCOI.policyNumber}</p></div>
                     <div><span className="text-xs text-muted-foreground">Expiration</span><p className="font-medium text-foreground">{selectedCOI.expirationDate}</p></div>
                   </div>
+
+                  {/* GL Policy Upload & Review */}
+                  <div className="rounded-lg border border-border p-4">
+                    <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">GL Policy Document</h4>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <PolicyUploadButton
+                        coiId={selectedCOI.id}
+                        projectId={project.id}
+                        currentFilePath={selectedCOI.gl_policy_file_path}
+                      />
+                      {selectedCOI.gl_policy_file_path && (
+                        <PolicyReviewDialog
+                          coiId={selectedCOI.id}
+                          filePath={selectedCOI.gl_policy_file_path}
+                          subcontractorName={selectedCOI.subcontractor}
+                        />
+                      )}
+                    </div>
+                    {!selectedCOI.gl_policy_file_path && (
+                      <p className="text-[11px] text-muted-foreground mt-2">
+                        Upload the full GL policy PDF for an in-depth AI review of exclusions and provisions.
+                      </p>
+                    )}
+                  </div>
+
                   {selectedCOI.wcPolicy && (
                     <div className="rounded-lg border border-border p-4">
                       <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Workers' Compensation</h4>

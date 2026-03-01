@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      gc_settings: {
+        Row: {
+          additional_insured_required: boolean
+          agreement_file_path: string | null
+          created_at: string
+          id: string
+          min_gl_coverage_limit: string | null
+          updated_at: string
+          wc_required: boolean
+        }
+        Insert: {
+          additional_insured_required?: boolean
+          agreement_file_path?: string | null
+          created_at?: string
+          id?: string
+          min_gl_coverage_limit?: string | null
+          updated_at?: string
+          wc_required?: boolean
+        }
+        Update: {
+          additional_insured_required?: boolean
+          agreement_file_path?: string | null
+          created_at?: string
+          id?: string
+          min_gl_coverage_limit?: string | null
+          updated_at?: string
+          wc_required?: boolean
+        }
+        Relationships: []
+      }
       projects: {
         Row: {
           address: string
@@ -50,6 +80,7 @@ export type Database = {
       subcontractor_cois: {
         Row: {
           action_over: string
+          additional_insured: string
           coi_file_path: string | null
           company: string
           created_at: string
@@ -73,6 +104,7 @@ export type Database = {
         }
         Insert: {
           action_over?: string
+          additional_insured?: string
           coi_file_path?: string | null
           company?: string
           created_at?: string
@@ -96,6 +128,7 @@ export type Database = {
         }
         Update: {
           action_over?: string
+          additional_insured?: string
           coi_file_path?: string | null
           company?: string
           created_at?: string
