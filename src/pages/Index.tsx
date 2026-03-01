@@ -59,10 +59,11 @@ const Index = () => {
   const openFile = async (filePath: string) => {
     try {
       const { data } = await supabase.storage.from('certificates').createSignedUrl(filePath, 300);
-      if (data?.signedUrl) {
-        const signedUrl = data.signedUrl.startsWith('http')
-          ? data.signedUrl
-          : `${import.meta.env.VITE_SUPABASE_URL}/storage/v1${data.signedUrl.startsWith('/') ? data.signedUrl : `/${data.signedUrl}`}`;
+      const signed = (data as any)?.signedUrl || (data as any)?.signedURL;
+      if (signed) {
+        const signedUrl = signed.startsWith('http')
+          ? signed
+          : `${import.meta.env.VITE_SUPABASE_URL}/storage/v1${signed.startsWith('/') ? signed : `/${signed}`}`;
         window.location.href = signedUrl;
       }
     } catch (e) {
