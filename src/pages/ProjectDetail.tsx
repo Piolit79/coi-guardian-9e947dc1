@@ -1,7 +1,7 @@
 import { useParams, Link } from 'react-router-dom';
 import { AppLayout } from '@/components/AppLayout';
 import { useProject } from '@/hooks/useProjects';
-import { useProjectCOIs } from '@/hooks/useCOIs';
+import { useProjectCOIs, useDeleteCOI } from '@/hooks/useCOIs';
 import { COICard } from '@/components/COICard';
 import { DropZone } from '@/components/DropZone';
 import { GLPolicyViewer } from '@/components/GLPolicyViewer';
@@ -12,7 +12,7 @@ import { ComplianceBadge } from '@/components/ComplianceBadge';
 import { useGCSettings } from '@/hooks/useGCSettings';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, MapPin, Loader2, FileText, ExternalLink, CheckCircle2, XCircle, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, MapPin, Loader2, FileText, ExternalLink, CheckCircle2, XCircle, AlertTriangle, Trash2 } from 'lucide-react';
 import { COI } from '@/types/coi';
 import { useState } from 'react';
 import {
@@ -88,6 +88,7 @@ export default function ProjectDetail() {
   const { data: cois, isLoading: coisLoading } = useProjectCOIs(id);
   const { data: settings } = useGCSettings();
   const [selectedCOI, setSelectedCOI] = useState<COI | null>(null);
+  const deleteCOI = useDeleteCOI();
 
   if (projLoading) {
     return (
@@ -326,6 +327,24 @@ export default function ProjectDetail() {
                     </div>
                   )}
                 </div>
+
+                  {/* Delete */}
+                  <div className="pt-2 border-t border-border">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-destructive hover:text-destructive hover:bg-destructive/10 gap-1.5 text-xs"
+                      onClick={() => {
+                        if (confirm(`Delete ${selectedCOI.subcontractor}? This cannot be undone.`)) {
+                          deleteCOI.mutate({ id: selectedCOI.id, projectId: project.id });
+                          setSelectedCOI(null);
+                        }
+                      }}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                      Delete COI
+                    </Button>
+                  </div>
               </>
             )}
           </DialogContent>
