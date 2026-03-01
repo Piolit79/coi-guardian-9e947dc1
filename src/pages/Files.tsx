@@ -46,32 +46,41 @@ function getFolder(path: string) {
 export default function Files() {
   const { data: files, isLoading } = useQuery({
     queryKey: ['storage-files'],
-    queryFn: async () => {
-      // List all files across the bucket using the database
-      const { data, error } = await supabase
-        .from('storage_objects_view' as any)
-        .select('*');
+    queryFn: async (): Promise<StorageFile[]> => {
+      // Get all file paths from COI records + settings
+      const { data: cois } = await supabase
+        .from('subcontractor_cois')
+        .select('coi_file_path, gl_policy_file_path, subcontractor, created_at');
 
-      // Fallback: list from known prefixes
+      const { data: settings } = await supabase
+        .from('gc_settings')
+        .select('agreement_file_path')
+        .limit(1)
+        .maybeSingle();
+
       const allFiles: StorageFile[] = [];
-      const prefixes = ['', 'uploads/coi', 'uploads/gl-policies', 'agreements', 'policies'];
+      const seen = new Set<string>();
 
-      for (const prefix of prefixes) {
-        const { data: listed } = await supabase.storage
-          .from('certificates')
-          .list(prefix, { limit: 100, sortBy: { column: 'created_at', order: 'desc' } });
+      const addFile = (path: string | null, label?: string, createdAt?: string) => {
+        if (!path || seen.has(path)) return;
+        seen.add(path);
+        allFiles.push({
+          name: path,
+          id: path,
+          created_at: createdAt || '',
+          metadata: {},
+        });
+      };
 
-        if (listed) {
-          for (const item of listed) {
-            // Skip folders (items with no metadata or id that looks like a folder)
-            if (!item.id || item.name === '.emptyFolderPlaceholder') continue;
-            allFiles.push({
-              ...item,
-              name: prefix ? `${prefix}/${item.name}` : item.name,
-              metadata: item.metadata || {},
-            } as StorageFile);
-          }
-        }
+      // COI certificates and GL policies from DB
+      (cois || []).forEach(c => {
+        addFile(c.coi_file_path, c.subcontractor, c.created_at);
+        addFile(c.gl_policy_file_path, c.subcontractor, c.created_at);
+      });
+
+      // Agreement file
+      if (settings?.agreement_file_path) {
+        addFile(settings.agreement_file_path);
       }
 
       return allFiles;
