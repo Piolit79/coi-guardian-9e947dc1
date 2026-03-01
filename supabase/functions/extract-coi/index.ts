@@ -180,14 +180,41 @@ CRITICAL INSTRUCTIONS for extracting data:
     const extracted = JSON.parse(toolCall.function.arguments);
     const subName = (extracted.subcontractor || file.name).trim().toUpperCase();
 
-    // Check if a record for this subcontractor already exists in this project
-    const { data: existing } = await supabase
+    // Fuzzy match helper: if 80%+ of characters match, consider it the same sub
+    function similarity(a: string, b: string): number {
+      const longer = a.length > b.length ? a : b;
+      const shorter = a.length > b.length ? b : a;
+      if (longer.length === 0) return 1.0;
+      // Simple Levenshtein-based similarity
+      const costs: number[] = [];
+      for (let i = 0; i <= longer.length; i++) {
+        let lastVal = i;
+        for (let j = 0; j <= shorter.length; j++) {
+          if (i === 0) { costs[j] = j; }
+          else if (j > 0) {
+            let newVal = costs[j - 1];
+            if (longer[i - 1] !== shorter[j - 1]) {
+              newVal = Math.min(Math.min(newVal, lastVal), costs[j]) + 1;
+            }
+            costs[j - 1] = lastVal;
+            lastVal = newVal;
+          }
+        }
+        if (i > 0) costs[shorter.length] = lastVal;
+      }
+      return (longer.length - costs[shorter.length]) / longer.length;
+    }
+
+    // Check if a record for this subcontractor already exists in this project (fuzzy 80% match)
+    const { data: allProjectCois } = await supabase
       .from("subcontractor_cois")
       .select("*")
-      .eq("project_id", projectId)
-      .ilike("subcontractor", subName)
-      .limit(1)
-      .maybeSingle();
+      .eq("project_id", projectId);
+
+    const existing = (allProjectCois || []).find(row => {
+      const existingName = (row.subcontractor || "").toUpperCase();
+      return similarity(existingName, subName) >= 0.8;
+    }) || null;
 
     let coi;
     let dbError;
