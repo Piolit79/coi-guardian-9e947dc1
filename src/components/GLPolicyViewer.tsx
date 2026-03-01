@@ -19,9 +19,12 @@ const statusColors = {
   unknown: 'text-status-warning',
 };
 
-export function GLPolicyViewer({ policy }: GLPolicyViewerProps) {
+export function GLPolicyViewer({ policy, insuredName }: GLPolicyViewerProps & { insuredName?: string }) {
   return (
     <Card className="border border-border p-5">
+      {insuredName && (
+        <p className="text-sm font-semibold text-foreground mb-3">{insuredName}</p>
+      )}
       <div className="flex items-center gap-2 mb-4">
         <Shield className="h-5 w-5 text-primary" />
         <h3 className="text-sm font-semibold text-foreground">GL Policy Details</h3>
