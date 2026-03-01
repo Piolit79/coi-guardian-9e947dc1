@@ -19,6 +19,8 @@ export interface DBProjectWithCounts extends DBProject {
 export function useProjects() {
   return useQuery({
     queryKey: ['projects'],
+    staleTime: 0,
+    refetchOnMount: 'always',
     queryFn: async (): Promise<DBProjectWithCounts[]> => {
       const { data: projects, error } = await supabase
         .from('projects')
