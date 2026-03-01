@@ -53,13 +53,21 @@ function FileViewButton({ filePath, label }: { filePath: string; label: string }
 
   const openFile = async () => {
     setLoading(true);
+    const previewWindow = window.open('', '_blank', 'noopener,noreferrer');
+
     try {
       const { blob } = await downloadStorageFileBlob(filePath);
       const blobUrl = URL.createObjectURL(blob);
-      const opened = window.open(blobUrl, '_blank', 'noopener,noreferrer');
-      if (!opened) window.location.href = blobUrl;
+
+      if (previewWindow) {
+        previewWindow.location.href = blobUrl;
+      } else {
+        window.location.href = blobUrl;
+      }
+
       setTimeout(() => URL.revokeObjectURL(blobUrl), 60_000);
     } catch (e) {
+      if (previewWindow) previewWindow.close();
       console.error(e);
     } finally {
       setLoading(false);

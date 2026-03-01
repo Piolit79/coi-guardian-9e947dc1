@@ -99,13 +99,21 @@ export default function Files() {
 
   const handleOpen = async (filePath: string) => {
     setOpeningPath(filePath);
+    const previewWindow = window.open('', '_blank', 'noopener,noreferrer');
+
     try {
       const blobUrl = await getFileBlobUrl(filePath);
-      const opened = window.open(blobUrl, '_blank', 'noopener,noreferrer');
-      if (!opened) window.location.assign(blobUrl);
+
+      if (previewWindow) {
+        previewWindow.location.href = blobUrl;
+      } else {
+        window.location.assign(blobUrl);
+      }
+
       setTimeout(() => URL.revokeObjectURL(blobUrl), 60_000);
     } catch (e) {
       console.error('Open failed', e);
+      if (previewWindow) previewWindow.close();
       toast.error('Could not open file');
     } finally {
       setOpeningPath(null);
@@ -122,7 +130,7 @@ export default function Files() {
       a.download = getDisplayName(filePath);
       document.body.appendChild(a);
       a.click();
-      setTimeout(() => URL.revokeObjectURL(blobUrl), 0);
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 60_000);
       a.remove();
     } catch (e) {
       console.error('Download failed', e);
