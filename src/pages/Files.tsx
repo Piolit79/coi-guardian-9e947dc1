@@ -2,132 +2,121 @@ import { AppLayout } from '@/components/AppLayout';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
-import { downloadStorageFileBlob } from '@/lib/storageFile';
+import { downloadStorageFileBlob, createSignedFileUrl } from '@/lib/storageFile';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { FileText, Download, Loader2, FolderOpen } from 'lucide-react';
+import { FileText, Download, Loader2, FolderOpen, Shield } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 
 interface StorageFile {
-  name: string;
+  path: string;
   id: string;
+  insurer: string;
+  fileType: 'coi' | 'gl-policy' | 'agreement';
+  label: string;
   created_at: string;
-  metadata: {
-    size?: number;
-    mimetype?: string;
-  };
+  signedUrl: string | null;
+  projectId: string | null;
+  projectName: string | null;
 }
 
-function formatBytes(bytes: number | undefined) {
-  if (!bytes) return '—';
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
-
-function getDisplayName(path: string) {
-  // Strip timestamp prefix like "1772388567379_"
+function getOriginalFileName(path: string) {
   const fileName = path.split('/').pop() || path;
   return fileName.replace(/^\d+_/, '');
-}
-
-function getFolder(path: string) {
-  const parts = path.split('/');
-  if (parts.length <= 1) return 'Root';
-  // e.g. "uploads/coi/projectid/file" → "COI Certificates"
-  // "uploads/gl-policies/..." → "GL Policies"
-  // "agreements/..." → "Agreements"
-  // "projectid/..." → "Certificates"
-  if (parts[0] === 'uploads' && parts[1] === 'coi') return 'COI Certificates';
-  if (parts[0] === 'uploads' && parts[1] === 'gl-policies') return 'GL Policies';
-  if (parts[0] === 'agreements') return 'Agreements';
-  if (parts[0] === 'policies') return 'GL Policies';
-  return 'COI Certificates';
 }
 
 export default function Files() {
   const { data: files, isLoading } = useQuery({
     queryKey: ['storage-files'],
     queryFn: async (): Promise<StorageFile[]> => {
-      // Get all file paths from COI records + settings
-      const { data: cois } = await supabase
-        .from('subcontractor_cois')
-        .select('coi_file_path, gl_policy_file_path, subcontractor, created_at');
+      const [{ data: cois }, { data: projects }, { data: settings }] = await Promise.all([
+        supabase
+          .from('subcontractor_cois')
+          .select('coi_file_path, gl_policy_file_path, subcontractor, created_at, project_id')
+          .order('subcontractor', { ascending: true }),
+        supabase.from('projects').select('id, name'),
+        supabase.from('gc_settings').select('agreement_file_path').limit(1).maybeSingle(),
+      ]);
 
-      const { data: settings } = await supabase
-        .from('gc_settings')
-        .select('agreement_file_path')
-        .limit(1)
-        .maybeSingle();
+      const projectMap = new Map((projects || []).map(p => [p.id, p.name]));
 
-      const allFiles: StorageFile[] = [];
+      const entries: Omit<StorageFile, 'signedUrl'>[] = [];
       const seen = new Set<string>();
 
-      const addFile = (path: string | null, label?: string, createdAt?: string) => {
-        if (!path || seen.has(path)) return;
-        seen.add(path);
-        allFiles.push({
-          name: path,
-          id: path,
-          created_at: createdAt || '',
-          metadata: {},
-        });
-      };
-
-      // COI certificates and GL policies from DB
       (cois || []).forEach(c => {
-        addFile(c.coi_file_path, c.subcontractor, c.created_at);
-        addFile(c.gl_policy_file_path, c.subcontractor, c.created_at);
+        const insurer = c.subcontractor || 'Unknown';
+        const projectId = c.project_id || null;
+        const projectName = projectId ? (projectMap.get(projectId) || 'Unknown Project') : null;
+
+        if (c.coi_file_path && !seen.has(c.coi_file_path)) {
+          seen.add(c.coi_file_path);
+          entries.push({
+            path: c.coi_file_path,
+            id: c.coi_file_path,
+            insurer,
+            fileType: 'coi',
+            label: 'COI Certificate',
+            created_at: c.created_at || '',
+            projectId,
+            projectName,
+          });
+        }
+
+        if (c.gl_policy_file_path && !seen.has(c.gl_policy_file_path)) {
+          seen.add(c.gl_policy_file_path);
+          entries.push({
+            path: c.gl_policy_file_path,
+            id: c.gl_policy_file_path,
+            insurer,
+            fileType: 'gl-policy',
+            label: 'GL Policy',
+            created_at: c.created_at || '',
+            projectId,
+            projectName,
+          });
+        }
       });
 
-      // Agreement file
-      if (settings?.agreement_file_path) {
-        addFile(settings.agreement_file_path);
+      if (settings?.agreement_file_path && !seen.has(settings.agreement_file_path)) {
+        entries.push({
+          path: settings.agreement_file_path,
+          id: settings.agreement_file_path,
+          insurer: '',
+          fileType: 'agreement',
+          label: 'Agreement',
+          created_at: '',
+          projectId: null,
+          projectName: null,
+        });
       }
 
-      return allFiles;
+      // Pre-fetch all signed URLs in parallel
+      return Promise.all(
+        entries.map(async (entry) => {
+          let signedUrl: string | null = null;
+          try {
+            const result = await createSignedFileUrl(entry.path);
+            signedUrl = result.url;
+          } catch { /* file may not be in storage yet */ }
+          return { ...entry, signedUrl };
+        })
+      );
     },
   });
 
-  const [openingPath, setOpeningPath] = useState<string | null>(null);
+  const [downloadingPath, setDownloadingPath] = useState<string | null>(null);
 
-  const getFileBlobUrl = async (filePath: string) => {
-    const { blob } = await downloadStorageFileBlob(filePath);
-    return URL.createObjectURL(blob);
-  };
-
-  const handleOpen = async (filePath: string) => {
-    setOpeningPath(filePath);
-    const previewWindow = window.open('', '_blank', 'noopener,noreferrer');
-
-    try {
-      const blobUrl = await getFileBlobUrl(filePath);
-
-      if (previewWindow) {
-        previewWindow.location.href = blobUrl;
-      } else {
-        window.location.assign(blobUrl);
-      }
-
-      setTimeout(() => URL.revokeObjectURL(blobUrl), 60_000);
-    } catch (e) {
-      console.error('Open failed', e);
-      if (previewWindow) previewWindow.close();
-      toast.error('Could not open file');
-    } finally {
-      setOpeningPath(null);
-    }
-  };
-
-  const handleDownload = async (filePath: string) => {
-    setOpeningPath(filePath);
+  const handleDownload = async (filePath: string, insurer: string, label: string) => {
+    setDownloadingPath(filePath);
     try {
       const { blob } = await downloadStorageFileBlob(filePath);
+      const ext = (filePath.split('.').pop() || 'pdf').toLowerCase();
+      const safeName = insurer ? `${insurer} — ${label}.${ext}` : getOriginalFileName(filePath);
       const blobUrl = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = blobUrl;
-      a.download = getDisplayName(filePath);
+      a.download = safeName;
       document.body.appendChild(a);
       a.click();
       setTimeout(() => URL.revokeObjectURL(blobUrl), 60_000);
@@ -136,18 +125,26 @@ export default function Files() {
       console.error('Download failed', e);
       toast.error('Could not download file');
     } finally {
-      setOpeningPath(null);
+      setDownloadingPath(null);
     }
   };
 
-  // Group files by folder
-  const grouped = (files || []).reduce<Record<string, StorageFile[]>>((acc, f) => {
-    const folder = getFolder(f.name);
-    (acc[folder] = acc[folder] || []).push(f);
-    return acc;
-  }, {});
+  // Group by project name; agreements go in their own bucket
+  const projectGroups: Record<string, StorageFile[]> = {};
+  const agreements: StorageFile[] = [];
 
-  const folderOrder = ['COI Certificates', 'GL Policies', 'Agreements'];
+  (files || []).forEach(f => {
+    if (f.fileType === 'agreement') {
+      agreements.push(f);
+    } else {
+      const key = f.projectName || 'Unknown Project';
+      (projectGroups[key] = projectGroups[key] || []).push(f);
+    }
+  });
+
+  const sortedProjects = Object.keys(projectGroups).sort();
+
+  const isEmpty = (files || []).length === 0;
 
   return (
     <AppLayout>
@@ -157,57 +154,64 @@ export default function Files() {
           <p className="text-sm text-muted-foreground mt-1">All uploaded certificates, policies, and agreements</p>
         </div>
 
-
         {isLoading ? (
           <div className="flex items-center justify-center py-20">
             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
           </div>
-        ) : (files || []).length === 0 ? (
+        ) : isEmpty ? (
           <Card className="flex flex-col items-center justify-center border border-dashed border-border p-12 text-center">
             <FolderOpen className="h-10 w-10 text-muted-foreground mb-3" />
             <p className="text-sm font-medium text-foreground">No files yet</p>
             <p className="text-xs text-muted-foreground mt-1">Upload COI certificates from a project page to see them here.</p>
           </Card>
         ) : (
-          <div className="space-y-6">
-            {folderOrder.map(folder => {
-              const folderFiles = grouped[folder];
-              if (!folderFiles || folderFiles.length === 0) return null;
+          <div className="space-y-8">
+            {/* Project sections */}
+            {sortedProjects.map(projectName => {
+              const projectFiles = projectGroups[projectName];
               return (
-                <div key={folder}>
+                <div key={projectName}>
                   <div className="flex items-center gap-2 mb-3">
                     <FolderOpen className="h-4 w-4 text-primary" />
-                    <h2 className="text-sm font-semibold text-foreground">{folder}</h2>
-                    <span className="text-xs text-muted-foreground">({folderFiles.length})</span>
+                    <h2 className="text-sm font-semibold text-foreground">{projectName}</h2>
+                    <span className="text-xs text-muted-foreground">({projectFiles.length} file{projectFiles.length !== 1 ? 's' : ''})</span>
                   </div>
                   <div className="space-y-1.5">
-                    {folderFiles.map((file) => (
+                    {projectFiles.map(file => (
                       <Card
-                        key={file.name}
-                        className="flex items-center gap-3 border border-border px-4 py-3 cursor-pointer hover:shadow-sm transition-shadow"
-                        onClick={() => handleOpen(file.name)}
+                        key={file.id}
+                        className="flex items-center gap-3 border border-border px-4 py-3 hover:shadow-sm transition-shadow"
                       >
-                        <FileText className="h-4 w-4 text-primary shrink-0" />
-                        <div className="flex-1 min-w-0">
+                        {file.fileType === 'gl-policy'
+                          ? <Shield className="h-4 w-4 text-primary shrink-0" />
+                          : <FileText className="h-4 w-4 text-primary shrink-0" />
+                        }
+                        <a
+                          href={file.signedUrl ?? '#'}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex-1 min-w-0 cursor-pointer"
+                          onClick={!file.signedUrl ? (e) => e.preventDefault() : undefined}
+                        >
                           <p className="text-sm font-medium text-foreground truncate">
-                            {getDisplayName(file.name)}
+                            {file.insurer}
+                            <span className="ml-2 text-xs font-normal text-muted-foreground">— {file.label}</span>
                           </p>
-                          <p className="text-xs text-muted-foreground">
-                            {formatBytes(file.metadata?.size)}
-                            {file.created_at && ` · ${format(new Date(file.created_at), 'MMM d, yyyy h:mm a')}`}
+                          <p className="text-xs text-muted-foreground truncate">
+                            {getOriginalFileName(file.path)}
+                            {file.created_at && ` · ${format(new Date(file.created_at), 'MMM d, yyyy')}`}
                           </p>
-                        </div>
+                        </a>
                         <Button
                           variant="ghost"
                           size="sm"
                           className="shrink-0 gap-1.5 text-xs h-7 px-2"
-                          disabled={openingPath === file.name}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            void handleDownload(file.name);
-                          }}
+                          disabled={downloadingPath === file.path}
+                          onClick={() => void handleDownload(file.path, file.insurer, file.label)}
                         >
-                          {openingPath === file.name ? <Loader2 className="h-3 w-3 animate-spin" /> : <Download className="h-3 w-3" />}
+                          {downloadingPath === file.path
+                            ? <Loader2 className="h-3 w-3 animate-spin" />
+                            : <Download className="h-3 w-3" />}
                           Download
                         </Button>
                       </Card>
@@ -216,6 +220,50 @@ export default function Files() {
                 </div>
               );
             })}
+
+            {/* Agreements section */}
+            {agreements.length > 0 && (
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <FolderOpen className="h-4 w-4 text-primary" />
+                  <h2 className="text-sm font-semibold text-foreground">Agreements</h2>
+                  <span className="text-xs text-muted-foreground">({agreements.length})</span>
+                </div>
+                <div className="space-y-1.5">
+                  {agreements.map(file => (
+                    <Card
+                      key={file.id}
+                      className="flex items-center gap-3 border border-border px-4 py-3 hover:shadow-sm transition-shadow"
+                    >
+                      <FileText className="h-4 w-4 text-primary shrink-0" />
+                      <a
+                        href={file.signedUrl ?? '#'}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex-1 min-w-0 cursor-pointer"
+                        onClick={!file.signedUrl ? (e) => e.preventDefault() : undefined}
+                      >
+                        <p className="text-sm font-medium text-foreground truncate">
+                          {getOriginalFileName(file.path)}
+                        </p>
+                      </a>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="shrink-0 gap-1.5 text-xs h-7 px-2"
+                        disabled={downloadingPath === file.path}
+                        onClick={() => void handleDownload(file.path, '', 'Agreement')}
+                      >
+                        {downloadingPath === file.path
+                          ? <Loader2 className="h-3 w-3 animate-spin" />
+                          : <Download className="h-3 w-3" />}
+                        Download
+                      </Button>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

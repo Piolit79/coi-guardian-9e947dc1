@@ -71,24 +71,19 @@ export async function createSignedFileUrl(
   expiresInSeconds = 600,
   bucket = 'certificates'
 ): Promise<SignedUrlResult> {
-  const resolvedPath = await resolveStoragePath(filePath, bucket);
+  const candidates = getPathCandidates(filePath);
 
-  const { data, error } = await supabase.storage
-    .from(bucket)
-    .createSignedUrl(resolvedPath, expiresInSeconds);
+  for (const candidate of candidates) {
+    const { data, error } = await supabase.storage
+      .from(bucket)
+      .createSignedUrl(candidate, expiresInSeconds);
 
-  if (error) {
-    throw new Error(`Unable to create signed URL for ${filePath}: ${error.message}`);
+    const signed = (data as any)?.signedUrl || (data as any)?.signedURL;
+    if (!error && signed) {
+      return { url: toAbsoluteStorageUrl(signed), resolvedPath: candidate };
+    }
   }
 
-  const signed = (data as any)?.signedUrl || (data as any)?.signedURL;
-  if (!signed) {
-    throw new Error(`Unable to create signed URL for ${filePath}: missing signed URL`);
-  }
-
-  return {
-    url: toAbsoluteStorageUrl(signed),
-    resolvedPath,
-  };
+  throw new Error(`Unable to create signed URL for ${filePath}`);
 }
 

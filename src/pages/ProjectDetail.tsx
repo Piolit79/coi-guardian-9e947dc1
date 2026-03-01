@@ -13,7 +13,7 @@ import { useGCSettings } from '@/hooks/useGCSettings';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, MapPin, Loader2, FileText, ExternalLink, CheckCircle2, XCircle, AlertTriangle, Trash2 } from 'lucide-react';
-import { COI } from '@/types/coi';
+import { COI, getStatusFromDays } from '@/types/coi';
 import { useState } from 'react';
 import {
   Dialog,
@@ -22,7 +22,10 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { StatusBadge } from '@/components/StatusBadge';
-import { downloadStorageFileBlob } from '@/lib/storageFile';
+import { createSignedFileUrl } from '@/lib/storageFile';
+import { useEffect } from 'react';
+import { EditCOIDialog } from '@/components/EditCOIDialog';
+import { Pencil } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 function CoverageComplianceCheck({ label, value, minValue }: { label: string; value: string; minValue: string }) {
@@ -49,36 +52,30 @@ function CoverageComplianceCheck({ label, value, minValue }: { label: string; va
 }
 
 function FileViewButton({ filePath, label }: { filePath: string; label: string }) {
-  const [loading, setLoading] = useState(false);
+  const [url, setUrl] = useState<string | null>(null);
 
-  const openFile = async () => {
-    setLoading(true);
-    const previewWindow = window.open('', '_blank', 'noopener,noreferrer');
+  useEffect(() => {
+    createSignedFileUrl(filePath)
+      .then(({ url }) => setUrl(url))
+      .catch(console.error);
+  }, [filePath]);
 
-    try {
-      const { blob } = await downloadStorageFileBlob(filePath);
-      const blobUrl = URL.createObjectURL(blob);
-
-      if (previewWindow) {
-        previewWindow.location.href = blobUrl;
-      } else {
-        window.location.href = blobUrl;
-      }
-
-      setTimeout(() => URL.revokeObjectURL(blobUrl), 60_000);
-    } catch (e) {
-      if (previewWindow) previewWindow.close();
-      console.error(e);
-    } finally {
-      setLoading(false);
-    }
-  };
+  if (!url) {
+    return (
+      <Button variant="ghost" size="sm" disabled className="gap-1.5 text-xs h-7 px-2">
+        <Loader2 className="h-3 w-3 animate-spin" />
+        {label}
+      </Button>
+    );
+  }
 
   return (
-    <Button variant="ghost" size="sm" onClick={openFile} disabled={loading} className="gap-1.5 text-xs h-7 px-2">
-      {loading ? <Loader2 className="h-3 w-3 animate-spin" /> : <ExternalLink className="h-3 w-3" />}
-      {label}
-    </Button>
+    <a href={url} target="_blank" rel="noopener noreferrer">
+      <Button variant="ghost" size="sm" className="gap-1.5 text-xs h-7 px-2">
+        <ExternalLink className="h-3 w-3" />
+        {label}
+      </Button>
+    </a>
   );
 }
 
@@ -88,6 +85,7 @@ export default function ProjectDetail() {
   const { data: cois, isLoading: coisLoading } = useProjectCOIs(id);
   const { data: settings } = useGCSettings();
   const [selectedCOI, setSelectedCOI] = useState<COI | null>(null);
+  const [editingCOI, setEditingCOI] = useState<COI | null>(null);
   const deleteCOI = useDeleteCOI();
 
   if (projLoading) {
@@ -186,8 +184,8 @@ export default function ProjectDetail() {
                           <p className="font-mono text-xs font-medium text-foreground">{selectedCOI.glPolicy.policyNumber}</p>
                         </div>
                         <div>
-                          <span className="text-xs text-muted-foreground">Period</span>
-                          <p className="text-xs font-medium text-foreground">{selectedCOI.glPolicy.effectiveDate} — {selectedCOI.glPolicy.expirationDate}</p>
+                          <span className="text-xs text-muted-foreground">Expiration</span>
+                          <p className="text-xs font-medium text-foreground">{selectedCOI.glPolicy.expirationDate}</p>
                         </div>
                       </div>
                       <div className="space-y-2 rounded-md bg-muted/30 p-3">
@@ -217,12 +215,14 @@ export default function ProjectDetail() {
                         <div className="flex items-center justify-between text-xs">
                           <span className="text-muted-foreground">Certificate Holder</span>
                           <div className="flex items-center gap-1.5">
-                            <span className="font-medium text-foreground">SLAB Builders, LLC</span>
                             {(selectedCOI.certificate_holder || '').toUpperCase().includes('SLAB') ? (
-                              <CheckCircle2 className="h-3.5 w-3.5 text-status-valid" />
-                            ) : selectedCOI.certificate_holder && selectedCOI.certificate_holder !== 'unknown' ? (
+                              <>
+                                <span className="font-medium text-foreground">{selectedCOI.certificate_holder}</span>
+                                <CheckCircle2 className="h-3.5 w-3.5 text-status-valid" />
+                              </>
+                            ) : (
                               <XCircle className="h-3.5 w-3.5 text-status-expired" />
-                            ) : null}
+                            )}
                           </div>
                         </div>
                       </div>
@@ -237,7 +237,19 @@ export default function ProjectDetail() {
                         <div><span className="text-xs text-muted-foreground">Policy #</span><p className="font-mono text-xs font-medium text-foreground">{selectedCOI.umbrellaPolicy.policyNumber}</p></div>
                         <div><span className="text-xs text-muted-foreground">Carrier</span><p className="text-xs font-medium text-foreground">{selectedCOI.umbrellaPolicy.carrier}</p></div>
                         <div><span className="text-xs text-muted-foreground">Limit</span><p className="text-xs font-semibold text-foreground">{selectedCOI.umbrellaPolicy.limit}</p></div>
-                        <div><span className="text-xs text-muted-foreground">Period</span><p className="text-xs font-medium text-foreground">{selectedCOI.umbrellaPolicy.effectiveDate} — {selectedCOI.umbrellaPolicy.expirationDate}</p></div>
+                        <div>
+                          <span className="text-xs text-muted-foreground">Expiration</span>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <p className="text-xs font-medium text-foreground">{selectedCOI.umbrellaPolicy.expirationDate}</p>
+                            {(() => {
+                              const parts = (selectedCOI.umbrellaPolicy.expirationDate || '').split('/');
+                              if (parts.length !== 3) return null;
+                              const exp = new Date(+parts[2], +parts[0] - 1, +parts[1]);
+                              const days = Math.floor((exp.getTime() - Date.now()) / 86400000);
+                              return <StatusBadge status={getStatusFromDays(days)} daysUntilExpiry={days} />;
+                            })()}
+                          </div>
+                        </div>
                       </div>
                     </div>
                   )}
@@ -290,46 +302,47 @@ export default function ProjectDetail() {
                     )}
                   </div>
 
-                  {/* Coverage Provisions + Policy Review (only if provisions have data or GL policy uploaded) */}
-                  {selectedCOI.glPolicy && (
+                  {/* Coverage Provisions + Policy Review (only shown after GL policy upload + AI review) */}
+                  {selectedCOI.gl_policy_file_path && selectedCOI.glPolicy && selectedCOI.glPolicy.provisions.some(p => p.status !== 'unknown') && (
                     <div className="rounded-lg border border-border p-4">
                       <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Coverage Provisions & Policy Review</h4>
-                      {selectedCOI.glPolicy.provisions.some(p => p.status !== 'unknown') ? (
-                        <div className="space-y-2 mb-3">
-                          {selectedCOI.glPolicy.provisions.map((provision) => {
-                            const Icon = provision.status === 'included' ? CheckCircle2 : provision.status === 'excluded' ? XCircle : AlertTriangle;
-                            const color = provision.status === 'included' ? 'text-status-valid' : provision.status === 'excluded' ? 'text-status-expired' : 'text-status-warning';
-                            return (
-                              <div key={provision.name} className="flex items-start gap-2.5 rounded-lg bg-muted/50 px-3 py-2.5">
-                                <Icon className={cn("h-4 w-4 mt-0.5 shrink-0", color)} />
-                                <div className="flex-1 min-w-0">
-                                  <span className="text-xs font-medium text-foreground">{provision.name}</span>
-                                  {provision.details && (
-                                    <p className="text-[11px] text-muted-foreground mt-0.5">{provision.details}</p>
-                                  )}
-                                </div>
+                      <div className="space-y-2 mb-3">
+                        {selectedCOI.glPolicy.provisions.map((provision) => {
+                          const Icon = provision.status === 'included' ? CheckCircle2 : provision.status === 'excluded' ? XCircle : AlertTriangle;
+                          const color = provision.status === 'included' ? 'text-status-valid' : provision.status === 'excluded' ? 'text-status-expired' : 'text-status-warning';
+                          return (
+                            <div key={provision.name} className="flex items-start gap-2.5 rounded-lg bg-muted/50 px-3 py-2.5">
+                              <Icon className={cn("h-4 w-4 mt-0.5 shrink-0", color)} />
+                              <div className="flex-1 min-w-0">
+                                <span className="text-xs font-medium text-foreground">{provision.name}</span>
+                                {provision.details && (
+                                  <p className="text-[11px] text-muted-foreground mt-0.5">{provision.details}</p>
+                                )}
                               </div>
-                            );
-                          })}
-                        </div>
-                      ) : (
-                        <p className="text-[11px] text-muted-foreground mb-3">
-                          No provision data yet. Upload a GL policy and run a review to analyze coverage provisions.
-                        </p>
-                      )}
-                      {selectedCOI.gl_policy_file_path && (
-                        <PolicyReviewDialog
-                          coiId={selectedCOI.id}
-                          filePath={selectedCOI.gl_policy_file_path}
-                          subcontractorName={selectedCOI.subcontractor}
-                        />
-                      )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                      <PolicyReviewDialog
+                        coiId={selectedCOI.id}
+                        filePath={selectedCOI.gl_policy_file_path}
+                        subcontractorName={selectedCOI.subcontractor}
+                      />
                     </div>
                   )}
                 </div>
 
-                  {/* Delete */}
-                  <div className="pt-2 border-t border-border">
+                  {/* Edit & Delete */}
+                  <div className="pt-2 border-t border-border flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-1.5 text-xs"
+                      onClick={() => setEditingCOI(selectedCOI)}
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                      Edit COI Info
+                    </Button>
                     <Button
                       variant="ghost"
                       size="sm"
@@ -349,6 +362,15 @@ export default function ProjectDetail() {
             )}
           </DialogContent>
         </Dialog>
+
+        {editingCOI && (
+          <EditCOIDialog
+            coi={editingCOI}
+            projectId={project.id}
+            open={!!editingCOI}
+            onClose={() => setEditingCOI(null)}
+          />
+        )}
       </div>
     </AppLayout>
   );

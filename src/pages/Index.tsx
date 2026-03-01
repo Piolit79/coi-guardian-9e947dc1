@@ -9,8 +9,7 @@ import { ComplianceBadge } from '@/components/ComplianceBadge';
 import { PolicyUploadButton } from '@/components/PolicyUploadButton';
 import { PolicyReviewDialog } from '@/components/PolicyReviewDialog';
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
+import {
   ChevronDown,
   ChevronRight,
   MapPin,
@@ -23,12 +22,11 @@ import {
   ExternalLink,
   Bell,
   CalendarDays,
-  List,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { cn } from '@/lib/utils';
-import { COI } from '@/types/coi';
+import { COI, getStatusFromDays } from '@/types/coi';
 import {
   Collapsible,
   CollapsibleContent,
@@ -40,8 +38,48 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { downloadStorageFileBlob } from '@/lib/storageFile';
-import { parseISO, format, isValid } from 'date-fns';
+import { createSignedFileUrl } from '@/lib/storageFile';
+import { format, isValid } from 'date-fns';
+
+function CoverageComplianceCheck({ label, value, minValue }: { label: string; value: string; minValue: string }) {
+  const parse = (s: string) => parseFloat((s || '0').replace(/[^0-9.]/g, ''));
+  const actual = parse(value);
+  const min = parse(minValue);
+  const compliant = min <= 0 || actual >= min;
+  return (
+    <div className="flex items-center justify-between text-xs">
+      <span className="text-muted-foreground">{label}</span>
+      <div className="flex items-center gap-1.5">
+        <span className="font-medium text-foreground">{value || 'N/A'}</span>
+        {min > 0 && (compliant
+          ? <CheckCircle2 className="h-3.5 w-3.5 text-status-valid" />
+          : <AlertTriangle className="h-3.5 w-3.5 text-status-expired" />
+        )}
+      </div>
+    </div>
+  );
+}
+
+function DashboardFileViewButton({ filePath, label }: { filePath: string; label: string }) {
+  const [url, setUrl] = useState<string | null>(null);
+  useEffect(() => {
+    createSignedFileUrl(filePath).then(({ url }) => setUrl(url)).catch(console.error);
+  }, [filePath]);
+  if (!url) {
+    return (
+      <Button variant="ghost" size="sm" disabled className="gap-1.5 text-xs h-7 px-2">
+        <Loader2 className="h-3 w-3 animate-spin" />{label}
+      </Button>
+    );
+  }
+  return (
+    <a href={url} target="_blank" rel="noopener noreferrer">
+      <Button variant="ghost" size="sm" className="gap-1.5 text-xs h-7 px-2">
+        <ExternalLink className="h-3 w-3" />{label}
+      </Button>
+    </a>
+  );
+}
 
 const projectStatusStyles: Record<string, string> = {
   active: 'bg-status-valid-bg text-status-valid',
@@ -56,25 +94,6 @@ const Index = () => {
   const [expandedProjects, setExpandedProjects] = useState<Set<string>>(new Set());
   const [selectedCOI, setSelectedCOI] = useState<(COI & { project_id?: string }) | null>(null);
 
-  const openFile = async (filePath: string) => {
-    const previewWindow = window.open('', '_blank', 'noopener,noreferrer');
-
-    try {
-      const { blob } = await downloadStorageFileBlob(filePath);
-      const blobUrl = URL.createObjectURL(blob);
-
-      if (previewWindow) {
-        previewWindow.location.href = blobUrl;
-      } else {
-        window.location.href = blobUrl;
-      }
-
-      setTimeout(() => URL.revokeObjectURL(blobUrl), 60_000);
-    } catch (e) {
-      if (previewWindow) previewWindow.close();
-      console.error(e);
-    }
-  };
 
   const toggleProject = (id: string) => {
     setExpandedProjects(prev => {
@@ -108,6 +127,7 @@ const Index = () => {
   const expiringCount = dashboardCois.filter(c => c.status === 'expiring').length;
   const expiredCount = dashboardCois.filter(c => c.status === 'expired').length;
   const activeProjects = (projects || []).filter(p => p.status === 'active').length;
+  const projectMap = new Map((projects || []).map(p => [p.id, p.name]));
 
   // Alerts: expiring + expired COIs
   const alerts = dashboardCois
@@ -151,8 +171,8 @@ const Index = () => {
     { label: 'Expired', value: expiredCount, icon: XCircle, color: 'text-status-expired', bg: 'bg-status-expired-bg' },
   ];
 
-  // Group COIs by project
-  const coisByProject = dashboardCois.reduce<Record<string, (COI & { project_id: string })[]>>((acc, coi) => {
+  // Group all COIs by project (no dedup — matches what the Projects page shows)
+  const coisByProject = (allCois || []).reduce<Record<string, (COI & { project_id: string })[]>>((acc, coi) => {
     (acc[coi.project_id] = acc[coi.project_id] || []).push(coi);
     return acc;
   }, {});
@@ -210,6 +230,11 @@ const Index = () => {
                         <p className="text-sm font-medium text-foreground truncate">{coi.subcontractor}</p>
                         <StatusBadge status={coi.status} daysUntilExpiry={coi.daysUntilExpiry} />
                       </div>
+                      {coi.project_id && projectMap.get(coi.project_id) && (
+                        <p className="text-[11px] font-medium text-primary mb-0.5 truncate">
+                          {projectMap.get(coi.project_id)}
+                        </p>
+                      )}
                       <p className="text-xs text-muted-foreground">
                         {coi.status === 'expired'
                           ? `Policy ${coi.policyNumber} expired. Request updated certificate.`
@@ -280,8 +305,13 @@ const Index = () => {
                     {months[parseInt(selectedMonth!.split('-')[1]) - 1]} {selectedMonth!.split('-')[0]} — {selectedMonthCois.length} expiring
                   </p>
                   {selectedMonthCois.map(coi => (
-                    <button key={coi.id} onClick={() => setSelectedCOI(coi)} className="w-full flex items-center justify-between gap-2 rounded px-2 py-1.5 text-left hover:bg-muted/50 transition-colors">
-                      <span className="text-xs font-medium text-foreground truncate">{coi.subcontractor}</span>
+                    <button key={coi.id} onClick={() => setSelectedCOI(coi)} className="w-full flex items-start justify-between gap-2 rounded px-2 py-1.5 text-left hover:bg-muted/50 transition-colors">
+                      <div className="min-w-0">
+                        <span className="text-xs font-medium text-foreground truncate block">{coi.subcontractor}</span>
+                        {coi.project_id && projectMap.get(coi.project_id) && (
+                          <span className="text-[10px] text-primary truncate block">{projectMap.get(coi.project_id)}</span>
+                        )}
+                      </div>
                       <StatusBadge status={coi.status} daysUntilExpiry={coi.daysUntilExpiry} />
                     </button>
                   ))}
@@ -419,7 +449,7 @@ const Index = () => {
                     </div>
                   </div>
 
-                  {/* GL Details with compliance checks */}
+                  {/* GL Details */}
                   {selectedCOI.glPolicy && (
                     <div className="rounded-lg border border-border p-4">
                       <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">General Liability</h4>
@@ -429,49 +459,43 @@ const Index = () => {
                           <p className="font-mono text-xs font-medium text-foreground">{selectedCOI.glPolicy.policyNumber}</p>
                         </div>
                         <div>
-                          <span className="text-xs text-muted-foreground">Period</span>
-                          <p className="text-xs font-medium text-foreground">{selectedCOI.glPolicy.effectiveDate} — {selectedCOI.glPolicy.expirationDate}</p>
+                          <span className="text-xs text-muted-foreground">Expiration</span>
+                          <p className="text-xs font-medium text-foreground">{selectedCOI.glPolicy.expirationDate}</p>
                         </div>
                       </div>
                       <div className="space-y-2 rounded-md bg-muted/30 p-3">
-                        <div className="flex items-center justify-between text-xs">
-                          <span className="text-muted-foreground">Each Occurrence</span>
-                          <div className="flex items-center gap-1.5">
-                            <span className="font-medium text-foreground">{selectedCOI.glPolicy.perOccurrenceLimit || selectedCOI.glPolicy.coverageLimit || 'N/A'}</span>
-                            {settings?.min_gl_coverage_limit && (() => {
-                              const parse = (s: string) => parseFloat((s || '0').replace(/[^0-9.]/g, ''));
-                              const actual = parse(selectedCOI.glPolicy!.perOccurrenceLimit || selectedCOI.glPolicy!.coverageLimit);
-                              const min = parse(settings.min_gl_coverage_limit);
-                              return min > 0 ? (actual >= min ? <CheckCircle2 className="h-3.5 w-3.5 text-status-valid" /> : <AlertTriangle className="h-3.5 w-3.5 text-status-expired" />) : null;
-                            })()}
-                          </div>
-                        </div>
-                        <div className="flex items-center justify-between text-xs">
-                          <span className="text-muted-foreground">General Aggregate</span>
-                          <span className="font-medium text-foreground">{selectedCOI.glPolicy.aggregateLimit || 'N/A'}</span>
-                        </div>
+                        <CoverageComplianceCheck
+                          label="Each Occurrence"
+                          value={selectedCOI.glPolicy.perOccurrenceLimit || selectedCOI.glPolicy.coverageLimit}
+                          minValue={settings?.min_gl_coverage_limit || ''}
+                        />
+                        <CoverageComplianceCheck
+                          label="General Aggregate"
+                          value={selectedCOI.glPolicy.aggregateLimit || 'N/A'}
+                          minValue={settings?.min_gl_coverage_limit || ''}
+                        />
                         <div className="flex items-center justify-between text-xs">
                           <span className="text-muted-foreground">Additional Insured</span>
                           <div className="flex items-center gap-1.5">
                             <span className="font-medium text-foreground capitalize">{selectedCOI.additional_insured || 'unknown'}</span>
                             {settings?.additional_insured_required && (
-                              selectedCOI.additional_insured === 'confirmed' ? (
-                                <CheckCircle2 className="h-3.5 w-3.5 text-status-valid" />
-                              ) : (
-                                <XCircle className="h-3.5 w-3.5 text-status-expired" />
-                              )
+                              selectedCOI.additional_insured === 'confirmed'
+                                ? <CheckCircle2 className="h-3.5 w-3.5 text-status-valid" />
+                                : <XCircle className="h-3.5 w-3.5 text-status-expired" />
                             )}
                           </div>
                         </div>
                         <div className="flex items-center justify-between text-xs">
                           <span className="text-muted-foreground">Certificate Holder</span>
                           <div className="flex items-center gap-1.5">
-                            <span className="font-medium text-foreground truncate max-w-[200px]">{selectedCOI.certificate_holder || 'unknown'}</span>
-                            {(selectedCOI.certificate_holder || '').includes('✓') ? (
-                              <CheckCircle2 className="h-3.5 w-3.5 text-status-valid" />
-                            ) : selectedCOI.certificate_holder && selectedCOI.certificate_holder !== 'unknown' ? (
+                            {(selectedCOI.certificate_holder || '').toUpperCase().includes('SLAB') ? (
+                              <>
+                                <span className="font-medium text-foreground">{selectedCOI.certificate_holder}</span>
+                                <CheckCircle2 className="h-3.5 w-3.5 text-status-valid" />
+                              </>
+                            ) : (
                               <XCircle className="h-3.5 w-3.5 text-status-expired" />
-                            ) : null}
+                            )}
                           </div>
                         </div>
                       </div>
@@ -486,16 +510,20 @@ const Index = () => {
                         <div><span className="text-xs text-muted-foreground">Policy #</span><p className="font-mono text-xs font-medium text-foreground">{selectedCOI.umbrellaPolicy.policyNumber}</p></div>
                         <div><span className="text-xs text-muted-foreground">Carrier</span><p className="text-xs font-medium text-foreground">{selectedCOI.umbrellaPolicy.carrier}</p></div>
                         <div><span className="text-xs text-muted-foreground">Limit</span><p className="text-xs font-semibold text-foreground">{selectedCOI.umbrellaPolicy.limit}</p></div>
-                        <div><span className="text-xs text-muted-foreground">Period</span><p className="text-xs font-medium text-foreground">{selectedCOI.umbrellaPolicy.effectiveDate} — {selectedCOI.umbrellaPolicy.expirationDate}</p></div>
+                        <div>
+                          <span className="text-xs text-muted-foreground">Expiration</span>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <p className="text-xs font-medium text-foreground">{selectedCOI.umbrellaPolicy.expirationDate}</p>
+                            {(() => {
+                              const parts = (selectedCOI.umbrellaPolicy.expirationDate || '').split('/');
+                              if (parts.length !== 3) return null;
+                              const exp = new Date(+parts[2], +parts[0] - 1, +parts[1]);
+                              const days = Math.floor((exp.getTime() - Date.now()) / 86400000);
+                              return <StatusBadge status={getStatusFromDays(days)} daysUntilExpiry={days} />;
+                            })()}
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  )}
-
-                  {/* Description of Operations */}
-                  {selectedCOI.description_of_operations && (
-                    <div className="rounded-lg border border-border p-4">
-                      <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Description of Operations</h4>
-                      <p className="text-xs text-foreground whitespace-pre-wrap">{selectedCOI.description_of_operations}</p>
                     </div>
                   )}
 
@@ -528,14 +556,10 @@ const Index = () => {
                     <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Documents</h4>
                     <div className="flex flex-wrap items-center gap-2">
                       {selectedCOI.coi_file_path && (
-                        <Button variant="ghost" size="sm" onClick={() => openFile(selectedCOI.coi_file_path!)} className="gap-1.5 text-xs h-7 px-2">
-                          <ExternalLink className="h-3 w-3" />View COI PDF
-                        </Button>
+                        <DashboardFileViewButton filePath={selectedCOI.coi_file_path} label="View COI PDF" />
                       )}
                       {selectedCOI.gl_policy_file_path && (
-                        <Button variant="ghost" size="sm" onClick={() => openFile(selectedCOI.gl_policy_file_path!)} className="gap-1.5 text-xs h-7 px-2">
-                          <ExternalLink className="h-3 w-3" />View GL Policy PDF
-                        </Button>
+                        <DashboardFileViewButton filePath={selectedCOI.gl_policy_file_path} label="View GL Policy PDF" />
                       )}
                       {selectedCOI.project_id && (
                         <PolicyUploadButton
@@ -550,36 +574,30 @@ const Index = () => {
                     )}
                   </div>
 
-                  {/* Coverage Provisions & Policy Review */}
-                  {selectedCOI.glPolicy && (
+                  {/* Coverage Provisions & Policy Review (only shown after GL policy upload + AI review) */}
+                  {selectedCOI.gl_policy_file_path && selectedCOI.glPolicy && selectedCOI.glPolicy.provisions.some(p => p.status !== 'unknown') && (
                     <div className="rounded-lg border border-border p-4">
                       <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Coverage Provisions & Policy Review</h4>
-                      {selectedCOI.glPolicy.provisions.some(p => p.status !== 'unknown') ? (
-                        <div className="space-y-2 mb-3">
-                          {selectedCOI.glPolicy.provisions.map((provision) => {
-                            const Icon = provision.status === 'included' ? CheckCircle2 : provision.status === 'excluded' ? XCircle : AlertTriangle;
-                            const color = provision.status === 'included' ? 'text-status-valid' : provision.status === 'excluded' ? 'text-status-expired' : 'text-status-warning';
-                            return (
-                              <div key={provision.name} className="flex items-start gap-2.5 rounded-lg bg-muted/50 px-3 py-2.5">
-                                <Icon className={cn("h-4 w-4 mt-0.5 shrink-0", color)} />
-                                <div className="flex-1 min-w-0">
-                                  <span className="text-xs font-medium text-foreground">{provision.name}</span>
-                                  {provision.details && <p className="text-[11px] text-muted-foreground mt-0.5">{provision.details}</p>}
-                                </div>
+                      <div className="space-y-2 mb-3">
+                        {selectedCOI.glPolicy.provisions.map((provision) => {
+                          const Icon = provision.status === 'included' ? CheckCircle2 : provision.status === 'excluded' ? XCircle : AlertTriangle;
+                          const color = provision.status === 'included' ? 'text-status-valid' : provision.status === 'excluded' ? 'text-status-expired' : 'text-status-warning';
+                          return (
+                            <div key={provision.name} className="flex items-start gap-2.5 rounded-lg bg-muted/50 px-3 py-2.5">
+                              <Icon className={cn("h-4 w-4 mt-0.5 shrink-0", color)} />
+                              <div className="flex-1 min-w-0">
+                                <span className="text-xs font-medium text-foreground">{provision.name}</span>
+                                {provision.details && <p className="text-[11px] text-muted-foreground mt-0.5">{provision.details}</p>}
                               </div>
-                            );
-                          })}
-                        </div>
-                      ) : (
-                        <p className="text-[11px] text-muted-foreground mb-3">No provision data yet. Upload a GL policy and run a review to analyze coverage provisions.</p>
-                      )}
-                      {selectedCOI.gl_policy_file_path && (
-                        <PolicyReviewDialog
-                          coiId={selectedCOI.id}
-                          filePath={selectedCOI.gl_policy_file_path}
-                          subcontractorName={selectedCOI.subcontractor}
-                        />
-                      )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                      <PolicyReviewDialog
+                        coiId={selectedCOI.id}
+                        filePath={selectedCOI.gl_policy_file_path}
+                        subcontractorName={selectedCOI.subcontractor}
+                      />
                     </div>
                   )}
                 </div>
