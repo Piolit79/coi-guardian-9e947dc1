@@ -61,10 +61,7 @@ export default function ProjectDetail() {
           )}
         </div>
 
-        <DropZone 
-          className="mb-8" 
-          onFilesDropped={(files) => console.log('Files dropped:', files.map(f => f.name))} 
-        />
+        <DropZone className="mb-8" projectId={project.id} />
 
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-sm font-semibold text-foreground">
