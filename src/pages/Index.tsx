@@ -162,10 +162,10 @@ const Index = () => {
                             {projectCois.map((coi) => (
                               <button key={coi.id} onClick={() => setSelectedCOI(coi)} className="w-full flex items-center gap-4 px-6 py-3 text-left hover:bg-muted/40 transition-colors">
                                 <div className="flex-1 min-w-0">
-                                  <div className="flex items-center gap-2 mb-0.5">
-                                    <span className="text-sm font-medium text-foreground">{coi.company}</span>
-                                  </div>
-                                  <p className="text-xs text-muted-foreground">{coi.subcontractor}</p>
+                                                  <div className="flex items-center gap-2 mb-0.5">
+                                                    <span className="text-sm font-medium text-foreground">{coi.subcontractor}</span>
+                                                  </div>
+                                                  <p className="text-xs text-muted-foreground">{coi.carrier}</p>
                                 </div>
                                 <div className="flex items-center gap-5 shrink-0">
                                   <div className="text-center">
@@ -212,13 +212,12 @@ const Index = () => {
               <>
                 <DialogHeader>
                   <DialogTitle className="flex items-center gap-2">
-                    {selectedCOI.company}
+                    {selectedCOI.subcontractor}
                     <StatusBadge status={selectedCOI.status} daysUntilExpiry={selectedCOI.daysUntilExpiry} />
                   </DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4 mt-2">
                   <div className="grid grid-cols-2 gap-3 text-sm">
-                    <div><span className="text-xs text-muted-foreground">Subcontractor</span><p className="font-medium text-foreground">{selectedCOI.subcontractor}</p></div>
                     <div><span className="text-xs text-muted-foreground">GL Carrier</span><p className="font-medium text-foreground">{selectedCOI.carrier}</p></div>
                     <div><span className="text-xs text-muted-foreground">GL Policy #</span><p className="font-mono text-xs font-medium text-foreground">{selectedCOI.policyNumber}</p></div>
                     <div>
