@@ -58,7 +58,10 @@ function FileViewButton({ filePath, label }: { filePath: string; label: string }
         .from('certificates')
         .createSignedUrl(filePath, 300);
       if (data?.signedUrl) {
-        window.location.assign(data.signedUrl);
+        const signedUrl = data.signedUrl.startsWith('http')
+          ? data.signedUrl
+          : `${import.meta.env.VITE_SUPABASE_URL}/storage/v1${data.signedUrl.startsWith('/') ? data.signedUrl : `/${data.signedUrl}`}`;
+        window.location.href = signedUrl;
       }
     } catch (e) {
       console.error(e);
