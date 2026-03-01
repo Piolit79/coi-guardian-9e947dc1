@@ -59,7 +59,8 @@ const Index = () => {
   const openFile = async (filePath: string) => {
     try {
       const { url } = await createSignedFileUrl(filePath, 300);
-      window.location.href = url;
+      const opened = window.open(url, '_blank', 'noopener,noreferrer');
+      if (!opened) window.location.href = url;
     } catch (e) {
       console.error(e);
     }
