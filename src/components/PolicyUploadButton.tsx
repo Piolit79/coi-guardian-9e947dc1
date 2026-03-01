@@ -25,7 +25,7 @@ export function PolicyUploadButton({ coiId, projectId, currentFilePath }: Policy
       if (!file) return;
       setUploading(true);
       try {
-        const filePath = `policies/${projectId}/${coiId}/${Date.now()}_${file.name}`;
+        const filePath = `uploads/gl-policies/${projectId}/${coiId}/${Date.now()}_${file.name}`;
         const { error: uploadError } = await supabase.storage
           .from('certificates')
           .upload(filePath, file, { contentType: file.type });
