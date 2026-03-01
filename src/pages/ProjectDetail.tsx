@@ -198,7 +198,7 @@ export default function ProjectDetail() {
                         <CoverageComplianceCheck
                           label="General Aggregate"
                           value={selectedCOI.glPolicy.aggregateLimit || 'N/A'}
-                          minValue=""
+                          minValue={settings?.min_gl_coverage_limit || ''}
                         />
                         <div className="flex items-center justify-between text-xs">
                           <span className="text-muted-foreground">Additional Insured</span>
@@ -216,8 +216,8 @@ export default function ProjectDetail() {
                         <div className="flex items-center justify-between text-xs">
                           <span className="text-muted-foreground">Certificate Holder</span>
                           <div className="flex items-center gap-1.5">
-                            <span className="font-medium text-foreground truncate max-w-[200px]">{selectedCOI.certificate_holder || 'unknown'}</span>
-                            {(selectedCOI.certificate_holder || '').includes('✓') ? (
+                            <span className="font-medium text-foreground">SLAB Builders, LLC</span>
+                            {selectedCOI.additional_insured === 'confirmed' || (selectedCOI.certificate_holder || '').includes('✓') ? (
                               <CheckCircle2 className="h-3.5 w-3.5 text-status-valid" />
                             ) : selectedCOI.certificate_holder && selectedCOI.certificate_holder !== 'unknown' ? (
                               <XCircle className="h-3.5 w-3.5 text-status-expired" />
@@ -241,13 +241,6 @@ export default function ProjectDetail() {
                     </div>
                   )}
 
-                  {/* Description of Operations */}
-                  {selectedCOI.description_of_operations && (
-                    <div className="rounded-lg border border-border p-4">
-                      <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Description of Operations</h4>
-                      <p className="text-xs text-foreground whitespace-pre-wrap">{selectedCOI.description_of_operations}</p>
-                    </div>
-                  )}
 
                   {/* WC Coverage */}
                   {selectedCOI.wcPolicy ? (
