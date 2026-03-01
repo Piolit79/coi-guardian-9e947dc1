@@ -8,6 +8,8 @@ import { StatusBadge } from '@/components/StatusBadge';
 import { ComplianceBadge } from '@/components/ComplianceBadge';
 import { PolicyUploadButton } from '@/components/PolicyUploadButton';
 import { PolicyReviewDialog } from '@/components/PolicyReviewDialog';
+import { Calendar } from '@/components/ui/calendar';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   ChevronDown,
   ChevronRight,
@@ -19,9 +21,12 @@ import {
   CheckCircle2,
   Loader2,
   ExternalLink,
+  Bell,
+  CalendarDays,
+  List,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { COI } from '@/types/coi';
 import {
@@ -36,6 +41,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
+import { parseISO, format, isValid } from 'date-fns';
 
 const projectStatusStyles: Record<string, string> = {
   active: 'bg-status-valid-bg text-status-valid',
@@ -68,6 +74,48 @@ const Index = () => {
   const expiringCount = (allCois || []).filter(c => c.status === 'expiring').length;
   const expiredCount = (allCois || []).filter(c => c.status === 'expired').length;
   const activeProjects = (projects || []).filter(p => p.status === 'active').length;
+
+  // Alerts: expiring + expired COIs
+  const alerts = (allCois || [])
+    .filter(c => c.status === 'expiring' || c.status === 'expired')
+    .sort((a, b) => a.daysUntilExpiry - b.daysUntilExpiry);
+
+  // Calendar: parse expiration dates for highlighting
+  const expirationDates = useMemo(() => {
+    const dateMap = new Map<string, { cois: (COI & { project_id: string })[], status: 'expired' | 'expiring' | 'valid' }>();
+    (allCois || []).forEach(coi => {
+      if (!coi.expirationDate) return;
+      // Parse MM/dd/yyyy format
+      const parts = coi.expirationDate.split('/');
+      if (parts.length !== 3) return;
+      const d = new Date(parseInt(parts[2]), parseInt(parts[0]) - 1, parseInt(parts[1]));
+      if (!isValid(d)) return;
+      const key = format(d, 'yyyy-MM-dd');
+      const existing = dateMap.get(key);
+      if (existing) {
+        existing.cois.push(coi);
+        if (coi.status === 'expired') existing.status = 'expired';
+        else if (coi.status === 'expiring' && existing.status !== 'expired') existing.status = 'expiring';
+      } else {
+        dateMap.set(key, { cois: [coi], status: coi.status });
+      }
+    });
+    return dateMap;
+  }, [allCois]);
+
+  const expDatesArray = useMemo(() => 
+    Array.from(expirationDates.keys()).map(k => new Date(k + 'T00:00:00')),
+    [expirationDates]
+  );
+
+  const [calendarMonth, setCalendarMonth] = useState<Date>(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>();
+
+  const selectedDateCois = useMemo(() => {
+    if (!selectedDate) return [];
+    const key = format(selectedDate, 'yyyy-MM-dd');
+    return expirationDates.get(key)?.cois || [];
+  }, [selectedDate, expirationDates]);
 
   const stats = [
     { label: 'Active Projects', value: activeProjects, icon: FolderKanban, color: 'text-primary', bg: 'bg-primary/10' },
@@ -112,6 +160,87 @@ const Index = () => {
               </div>
             </Card>
           ))}
+        </div>
+
+        {/* Alerts & Calendar Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+          {/* Alerts */}
+          <div className="lg:col-span-2">
+            <div className="flex items-center gap-2 mb-3">
+              <Bell className="h-4 w-4 text-status-warning" />
+              <h2 className="text-sm font-semibold text-foreground">Expiration Alerts</h2>
+              {alerts.length > 0 && (
+                <span className="rounded-full bg-status-warning-bg px-2 py-0.5 text-[10px] font-semibold text-status-warning">{alerts.length}</span>
+              )}
+            </div>
+            {alerts.length > 0 ? (
+              <div className="space-y-2 max-h-[280px] overflow-y-auto pr-1">
+                {alerts.map((coi) => (
+                  <Card key={coi.id} className="flex items-start gap-3 border border-border p-3 cursor-pointer hover:shadow-sm transition-shadow" onClick={() => setSelectedCOI(coi)}>
+                    <Bell className="h-3.5 w-3.5 text-status-warning mt-0.5 shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <p className="text-sm font-medium text-foreground truncate">{coi.subcontractor}</p>
+                        <StatusBadge status={coi.status} daysUntilExpiry={coi.daysUntilExpiry} />
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        {coi.status === 'expired'
+                          ? `Policy ${coi.policyNumber} expired. Request updated certificate.`
+                          : `Policy ${coi.policyNumber} expires ${coi.expirationDate}. Send renewal reminder.`}
+                      </p>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <Card className="flex items-center gap-3 border border-border p-6">
+                <CheckCircle2 className="h-5 w-5 text-status-valid" />
+                <p className="text-sm text-muted-foreground">All certificates are current. No alerts.</p>
+              </Card>
+            )}
+          </div>
+
+          {/* Calendar */}
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <CalendarDays className="h-4 w-4 text-primary" />
+              <h2 className="text-sm font-semibold text-foreground">Expiration Calendar</h2>
+            </div>
+            <Card className="border border-border p-2">
+              <Calendar
+                mode="single"
+                selected={selectedDate}
+                onSelect={setSelectedDate}
+                month={calendarMonth}
+                onMonthChange={setCalendarMonth}
+                className="p-1 pointer-events-auto"
+                modifiers={{
+                  expiring: expDatesArray,
+                }}
+                modifiersStyles={{
+                  expiring: {
+                    fontWeight: 700,
+                    textDecoration: 'underline',
+                    textDecorationColor: 'hsl(var(--status-warning))',
+                    textUnderlineOffset: '3px',
+                  },
+                }}
+              />
+              {selectedDateCois.length > 0 && (
+                <div className="border-t border-border px-3 py-2 space-y-1.5">
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">
+                    {format(selectedDate!, 'MMM d, yyyy')} — {selectedDateCois.length} expiring
+                  </p>
+                  {selectedDateCois.map(coi => (
+                    <button key={coi.id} onClick={() => setSelectedCOI(coi)} className="w-full flex items-center justify-between gap-2 rounded px-2 py-1.5 text-left hover:bg-muted/50 transition-colors">
+                      <span className="text-xs font-medium text-foreground truncate">{coi.subcontractor}</span>
+                      <StatusBadge status={coi.status} daysUntilExpiry={coi.daysUntilExpiry} />
+                    </button>
+                  ))}
+                </div>
+              )}
+            </Card>
+          </div>
         </div>
 
         {(projects || []).length === 0 ? (

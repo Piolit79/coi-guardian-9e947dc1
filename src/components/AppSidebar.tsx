@@ -2,7 +2,6 @@ import { Link, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, 
   FolderKanban, 
-  Bell, 
   Shield,
   Settings,
   ChevronLeft,
@@ -14,7 +13,6 @@ import { useState } from 'react';
 const navItems = [
   { path: '/', icon: LayoutDashboard, label: 'Dashboard' },
   { path: '/projects', icon: FolderKanban, label: 'Projects' },
-  { path: '/notifications', icon: Bell, label: 'Notifications' },
   { path: '/settings', icon: Settings, label: 'Settings' },
 ];
 
