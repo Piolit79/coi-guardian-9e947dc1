@@ -92,13 +92,12 @@ export default function ProjectDetail() {
               <>
                 <DialogHeader>
                   <DialogTitle className="flex items-center gap-2">
-                    {selectedCOI.company}
+                    {selectedCOI.subcontractor}
                     <StatusBadge status={selectedCOI.status} daysUntilExpiry={selectedCOI.daysUntilExpiry} />
                   </DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4 mt-2">
                   <div className="grid grid-cols-2 gap-3 text-sm">
-                    <div><span className="text-xs text-muted-foreground">Subcontractor</span><p className="font-medium text-foreground">{selectedCOI.subcontractor}</p></div>
                     <div><span className="text-xs text-muted-foreground">Carrier</span><p className="font-medium text-foreground">{selectedCOI.carrier}</p></div>
                     <div><span className="text-xs text-muted-foreground">Policy Number</span><p className="font-mono text-xs font-medium text-foreground">{selectedCOI.policyNumber}</p></div>
                     <div><span className="text-xs text-muted-foreground">Expiration</span><p className="font-medium text-foreground">{selectedCOI.expirationDate}</p></div>
@@ -120,7 +119,7 @@ export default function ProjectDetail() {
                       </div>
                     </div>
                   )}
-                  {selectedCOI.glPolicy && <GLPolicyViewer policy={selectedCOI.glPolicy} />}
+                  {selectedCOI.glPolicy && <GLPolicyViewer policy={selectedCOI.glPolicy} insuredName={selectedCOI.subcontractor} />}
                 </div>
               </>
             )}

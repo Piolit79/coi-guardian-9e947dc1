@@ -155,33 +155,101 @@ serve(async (req) => {
     }
 
     const extracted = JSON.parse(toolCall.function.arguments);
+    const subName = (extracted.subcontractor || file.name).trim().toUpperCase();
 
-    // Insert the COI record
-    const { data: coi, error: insertError } = await supabase
+    // Check if a record for this subcontractor already exists in this project
+    const { data: existing } = await supabase
       .from("subcontractor_cois")
-      .insert({
-        project_id: projectId,
-        subcontractor: extracted.subcontractor || file.name,
-        company: extracted.company || "",
-        gl_policy_number: extracted.gl_policy_number || null,
-        gl_carrier: extracted.gl_carrier || null,
-        gl_effective_date: extracted.gl_effective_date || null,
-        gl_expiration_date: extracted.gl_expiration_date || null,
-        gl_coverage_limit: extracted.gl_coverage_limit || null,
-        wc_policy_number: extracted.wc_policy_number || null,
-        wc_carrier: extracted.wc_carrier || null,
-        wc_effective_date: extracted.wc_effective_date || null,
-        wc_expiration_date: extracted.wc_expiration_date || null,
-        labor_law_coverage: extracted.labor_law_coverage || "unknown",
-        action_over: extracted.action_over || "unknown",
-        hammer_clause: extracted.hammer_clause || "unknown",
-        coi_file_path: filePath,
-      })
-      .select()
-      .single();
+      .select("*")
+      .eq("project_id", projectId)
+      .ilike("subcontractor", subName)
+      .limit(1)
+      .maybeSingle();
 
-    if (insertError) {
-      console.error("Insert error:", insertError);
+    let coi;
+    let dbError;
+
+    if (existing) {
+      // Merge: fill in missing fields from new cert
+      const updates: Record<string, unknown> = {};
+      if (!existing.gl_policy_number && extracted.gl_policy_number) {
+        updates.gl_policy_number = extracted.gl_policy_number;
+        updates.gl_carrier = extracted.gl_carrier || existing.gl_carrier;
+        updates.gl_effective_date = extracted.gl_effective_date || existing.gl_effective_date;
+        updates.gl_expiration_date = extracted.gl_expiration_date || existing.gl_expiration_date;
+        updates.gl_coverage_limit = extracted.gl_coverage_limit || existing.gl_coverage_limit;
+      } else if (extracted.gl_policy_number && extracted.gl_policy_number !== existing.gl_policy_number) {
+        // New GL data overwrites if different policy
+        updates.gl_policy_number = extracted.gl_policy_number;
+        updates.gl_carrier = extracted.gl_carrier || existing.gl_carrier;
+        updates.gl_effective_date = extracted.gl_effective_date || existing.gl_effective_date;
+        updates.gl_expiration_date = extracted.gl_expiration_date || existing.gl_expiration_date;
+        updates.gl_coverage_limit = extracted.gl_coverage_limit || existing.gl_coverage_limit;
+      }
+      if (!existing.wc_policy_number && extracted.wc_policy_number) {
+        updates.wc_policy_number = extracted.wc_policy_number;
+        updates.wc_carrier = extracted.wc_carrier || existing.wc_carrier;
+        updates.wc_effective_date = extracted.wc_effective_date || existing.wc_effective_date;
+        updates.wc_expiration_date = extracted.wc_expiration_date || existing.wc_expiration_date;
+      } else if (extracted.wc_policy_number && extracted.wc_policy_number !== existing.wc_policy_number) {
+        updates.wc_policy_number = extracted.wc_policy_number;
+        updates.wc_carrier = extracted.wc_carrier || existing.wc_carrier;
+        updates.wc_effective_date = extracted.wc_effective_date || existing.wc_effective_date;
+        updates.wc_expiration_date = extracted.wc_expiration_date || existing.wc_expiration_date;
+      }
+      // Update provisions if they were unknown
+      if (existing.labor_law_coverage === "unknown" && extracted.labor_law_coverage && extracted.labor_law_coverage !== "unknown") {
+        updates.labor_law_coverage = extracted.labor_law_coverage;
+      }
+      if (existing.action_over === "unknown" && extracted.action_over && extracted.action_over !== "unknown") {
+        updates.action_over = extracted.action_over;
+      }
+      if (existing.hammer_clause === "unknown" && extracted.hammer_clause && extracted.hammer_clause !== "unknown") {
+        updates.hammer_clause = extracted.hammer_clause;
+      }
+
+      if (Object.keys(updates).length > 0) {
+        const { data, error } = await supabase
+          .from("subcontractor_cois")
+          .update(updates)
+          .eq("id", existing.id)
+          .select()
+          .single();
+        coi = data;
+        dbError = error;
+      } else {
+        coi = existing;
+      }
+    } else {
+      // Insert new record
+      const { data, error } = await supabase
+        .from("subcontractor_cois")
+        .insert({
+          project_id: projectId,
+          subcontractor: subName,
+          company: extracted.company || "",
+          gl_policy_number: extracted.gl_policy_number || null,
+          gl_carrier: extracted.gl_carrier || null,
+          gl_effective_date: extracted.gl_effective_date || null,
+          gl_expiration_date: extracted.gl_expiration_date || null,
+          gl_coverage_limit: extracted.gl_coverage_limit || null,
+          wc_policy_number: extracted.wc_policy_number || null,
+          wc_carrier: extracted.wc_carrier || null,
+          wc_effective_date: extracted.wc_effective_date || null,
+          wc_expiration_date: extracted.wc_expiration_date || null,
+          labor_law_coverage: extracted.labor_law_coverage || "unknown",
+          action_over: extracted.action_over || "unknown",
+          hammer_clause: extracted.hammer_clause || "unknown",
+          coi_file_path: filePath,
+        })
+        .select()
+        .single();
+      coi = data;
+      dbError = error;
+    }
+
+    if (dbError) {
+      console.error("DB error:", dbError);
       return new Response(JSON.stringify({ error: "Failed to save COI record" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
