@@ -1,5 +1,6 @@
 import { COI } from '@/types/coi';
 import { StatusBadge } from './StatusBadge';
+import { ComplianceBadge } from './ComplianceBadge';
 import { Card } from '@/components/ui/card';
 import { Building2, Calendar, FileText, ChevronRight } from 'lucide-react';
 
@@ -19,6 +20,7 @@ export function COICard({ coi, onClick }: COICardProps) {
           <div className="flex items-center gap-2 mb-1">
             <h4 className="text-sm font-semibold text-foreground truncate">{coi.subcontractor}</h4>
             <StatusBadge status={coi.status} daysUntilExpiry={coi.daysUntilExpiry} />
+            <ComplianceBadge coi={coi} />
           </div>
           <p className="text-xs text-muted-foreground">{coi.carrier}</p>
         </div>
