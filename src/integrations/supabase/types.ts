@@ -14,7 +14,119 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      projects: {
+        Row: {
+          address: string
+          client: string
+          created_at: string
+          id: string
+          name: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          address?: string
+          client?: string
+          created_at?: string
+          id?: string
+          name: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          address?: string
+          client?: string
+          created_at?: string
+          id?: string
+          name?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      subcontractor_cois: {
+        Row: {
+          action_over: string
+          coi_file_path: string | null
+          company: string
+          created_at: string
+          gl_carrier: string | null
+          gl_coverage_limit: string | null
+          gl_effective_date: string | null
+          gl_expiration_date: string | null
+          gl_policy_file_path: string | null
+          gl_policy_number: string | null
+          hammer_clause: string
+          id: string
+          labor_law_coverage: string
+          project_id: string
+          subcontractor: string
+          updated_at: string
+          user_id: string
+          wc_carrier: string | null
+          wc_effective_date: string | null
+          wc_expiration_date: string | null
+          wc_policy_number: string | null
+        }
+        Insert: {
+          action_over?: string
+          coi_file_path?: string | null
+          company?: string
+          created_at?: string
+          gl_carrier?: string | null
+          gl_coverage_limit?: string | null
+          gl_effective_date?: string | null
+          gl_expiration_date?: string | null
+          gl_policy_file_path?: string | null
+          gl_policy_number?: string | null
+          hammer_clause?: string
+          id?: string
+          labor_law_coverage?: string
+          project_id: string
+          subcontractor: string
+          updated_at?: string
+          user_id: string
+          wc_carrier?: string | null
+          wc_effective_date?: string | null
+          wc_expiration_date?: string | null
+          wc_policy_number?: string | null
+        }
+        Update: {
+          action_over?: string
+          coi_file_path?: string | null
+          company?: string
+          created_at?: string
+          gl_carrier?: string | null
+          gl_coverage_limit?: string | null
+          gl_effective_date?: string | null
+          gl_expiration_date?: string | null
+          gl_policy_file_path?: string | null
+          gl_policy_number?: string | null
+          hammer_clause?: string
+          id?: string
+          labor_law_coverage?: string
+          project_id?: string
+          subcontractor?: string
+          updated_at?: string
+          user_id?: string
+          wc_carrier?: string | null
+          wc_effective_date?: string | null
+          wc_expiration_date?: string | null
+          wc_policy_number?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subcontractor_cois_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
