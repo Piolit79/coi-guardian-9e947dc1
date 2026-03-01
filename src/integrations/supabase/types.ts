@@ -23,7 +23,7 @@ export type Database = {
           name: string
           status: string
           updated_at: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           address?: string
@@ -33,7 +33,7 @@ export type Database = {
           name: string
           status?: string
           updated_at?: string
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           address?: string
@@ -43,7 +43,7 @@ export type Database = {
           name?: string
           status?: string
           updated_at?: string
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -65,7 +65,7 @@ export type Database = {
           project_id: string
           subcontractor: string
           updated_at: string
-          user_id: string
+          user_id: string | null
           wc_carrier: string | null
           wc_effective_date: string | null
           wc_expiration_date: string | null
@@ -88,7 +88,7 @@ export type Database = {
           project_id: string
           subcontractor: string
           updated_at?: string
-          user_id: string
+          user_id?: string | null
           wc_carrier?: string | null
           wc_effective_date?: string | null
           wc_expiration_date?: string | null
@@ -111,7 +111,7 @@ export type Database = {
           project_id?: string
           subcontractor?: string
           updated_at?: string
-          user_id?: string
+          user_id?: string | null
           wc_carrier?: string | null
           wc_effective_date?: string | null
           wc_expiration_date?: string | null
