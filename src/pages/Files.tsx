@@ -2,9 +2,11 @@ import { AppLayout } from '@/components/AppLayout';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
+import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { FileText, Download, Loader2, FolderOpen } from 'lucide-react';
+import { FileText, Download, Loader2, FolderOpen, ExternalLink, X } from 'lucide-react';
 import { format } from 'date-fns';
+import { toast } from 'sonner';
 
 interface StorageFile {
   name: string;
@@ -87,21 +89,44 @@ export default function Files() {
     },
   });
 
-  const handleDownload = async (filePath: string) => {
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewName, setPreviewName] = useState<string>('');
+  const [openingPath, setOpeningPath] = useState<string | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+    };
+  }, [previewUrl]);
+
+  const handleOpen = async (filePath: string) => {
+    setOpeningPath(filePath);
     try {
-      const { data } = await supabase.storage
+      const { data, error } = await supabase.storage
         .from('certificates')
-        .createSignedUrl(filePath, 300);
-      const signed = (data as any)?.signedUrl || (data as any)?.signedURL;
-      if (signed) {
-        const url = signed.startsWith('http')
-          ? signed
-          : `${import.meta.env.VITE_SUPABASE_URL}/storage/v1${signed.startsWith('/') ? signed : `/${signed}`}`;
-        window.location.href = url;
-      }
+        .download(filePath);
+      if (error || !data) throw error || new Error('Unable to load file');
+
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+      const url = URL.createObjectURL(data);
+      setPreviewUrl(url);
+      setPreviewName(getDisplayName(filePath));
     } catch (e) {
-      console.error('Download failed', e);
+      console.error('Open failed', e);
+      toast.error('Could not open file');
+    } finally {
+      setOpeningPath(null);
     }
+  };
+
+  const handleDownload = () => {
+    if (!previewUrl) return;
+    const a = document.createElement('a');
+    a.href = previewUrl;
+    a.download = previewName || 'document';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
   };
 
   // Group files by folder
@@ -120,6 +145,37 @@ export default function Files() {
           <h1 className="text-2xl font-bold text-foreground">Files</h1>
           <p className="text-sm text-muted-foreground mt-1">All uploaded certificates, policies, and agreements</p>
         </div>
+
+        {previewUrl && (
+          <Card className="mb-6 border border-border overflow-hidden">
+            <div className="flex items-center justify-between border-b border-border px-4 py-2.5">
+              <p className="text-sm font-medium text-foreground truncate">{previewName}</p>
+              <div className="flex items-center gap-2">
+                <Button variant="ghost" size="sm" className="h-7 gap-1.5 text-xs" onClick={() => window.open(previewUrl, '_blank', 'noopener,noreferrer')}>
+                  <ExternalLink className="h-3 w-3" />
+                  New Tab
+                </Button>
+                <Button variant="ghost" size="sm" className="h-7 gap-1.5 text-xs" onClick={handleDownload}>
+                  <Download className="h-3 w-3" />
+                  Download
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7"
+                  onClick={() => {
+                    URL.revokeObjectURL(previewUrl);
+                    setPreviewUrl(null);
+                    setPreviewName('');
+                  }}
+                >
+                  <X className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            </div>
+            <iframe src={previewUrl} title={previewName} className="h-[70vh] w-full" />
+          </Card>
+        )}
 
         {isLoading ? (
           <div className="flex items-center justify-center py-20">
@@ -148,7 +204,7 @@ export default function Files() {
                       <Card
                         key={file.name}
                         className="flex items-center gap-3 border border-border px-4 py-3 cursor-pointer hover:shadow-sm transition-shadow"
-                        onClick={() => handleDownload(file.name)}
+                        onClick={() => handleOpen(file.name)}
                       >
                         <FileText className="h-4 w-4 text-primary shrink-0" />
                         <div className="flex-1 min-w-0">
@@ -160,8 +216,8 @@ export default function Files() {
                             {file.created_at && ` · ${format(new Date(file.created_at), 'MMM d, yyyy h:mm a')}`}
                           </p>
                         </div>
-                        <Button variant="ghost" size="sm" className="shrink-0 gap-1.5 text-xs h-7 px-2">
-                          <Download className="h-3 w-3" />
+                        <Button variant="ghost" size="sm" className="shrink-0 gap-1.5 text-xs h-7 px-2" disabled={openingPath === file.name}>
+                          {openingPath === file.name ? <Loader2 className="h-3 w-3 animate-spin" /> : <Download className="h-3 w-3" />}
                           Open
                         </Button>
                       </Card>
