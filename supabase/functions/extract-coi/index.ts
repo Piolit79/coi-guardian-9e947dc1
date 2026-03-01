@@ -220,61 +220,61 @@ CRITICAL INSTRUCTIONS for extracting data:
     let dbError;
 
     if (existing) {
-      // Merge: fill in missing fields from new cert
+      // Merge logic: overwrite if the new policy has newer expiration dates
       const updates: Record<string, unknown> = {};
-      if (!existing.gl_policy_number && extracted.gl_policy_number) {
+
+      // Helper: is new date later than existing?
+      const isNewer = (newDate: string | null, oldDate: string | null): boolean => {
+        if (!newDate) return false;
+        if (!oldDate) return true;
+        return new Date(newDate) > new Date(oldDate);
+      };
+
+      // GL: overwrite if new GL expiration is later, or if no existing GL data
+      if (extracted.gl_policy_number && (!existing.gl_policy_number || isNewer(extracted.gl_expiration_date, existing.gl_expiration_date))) {
         updates.gl_policy_number = extracted.gl_policy_number;
         updates.gl_carrier = extracted.gl_carrier || existing.gl_carrier;
         updates.gl_effective_date = extracted.gl_effective_date || existing.gl_effective_date;
         updates.gl_expiration_date = extracted.gl_expiration_date || existing.gl_expiration_date;
         updates.gl_coverage_limit = extracted.gl_coverage_limit || existing.gl_coverage_limit;
-      } else if (extracted.gl_policy_number && extracted.gl_policy_number !== existing.gl_policy_number) {
-        // New GL data overwrites if different policy
-        updates.gl_policy_number = extracted.gl_policy_number;
-        updates.gl_carrier = extracted.gl_carrier || existing.gl_carrier;
-        updates.gl_effective_date = extracted.gl_effective_date || existing.gl_effective_date;
-        updates.gl_expiration_date = extracted.gl_expiration_date || existing.gl_expiration_date;
-        updates.gl_coverage_limit = extracted.gl_coverage_limit || existing.gl_coverage_limit;
+        updates.gl_per_occurrence_limit = extracted.gl_per_occurrence_limit || existing.gl_per_occurrence_limit;
+        updates.gl_aggregate_limit = extracted.gl_aggregate_limit || existing.gl_aggregate_limit;
+        updates.coi_file_path = filePath;
       }
-      if (!existing.wc_policy_number && extracted.wc_policy_number) {
-        updates.wc_policy_number = extracted.wc_policy_number;
-        updates.wc_carrier = extracted.wc_carrier || existing.wc_carrier;
-        updates.wc_effective_date = extracted.wc_effective_date || existing.wc_effective_date;
-        updates.wc_expiration_date = extracted.wc_expiration_date || existing.wc_expiration_date;
-      } else if (extracted.wc_policy_number && extracted.wc_policy_number !== existing.wc_policy_number) {
+
+      // WC: overwrite if new WC expiration is later, or if no existing WC data
+      if (extracted.wc_policy_number && (!existing.wc_policy_number || isNewer(extracted.wc_expiration_date, existing.wc_expiration_date))) {
         updates.wc_policy_number = extracted.wc_policy_number;
         updates.wc_carrier = extracted.wc_carrier || existing.wc_carrier;
         updates.wc_effective_date = extracted.wc_effective_date || existing.wc_effective_date;
         updates.wc_expiration_date = extracted.wc_expiration_date || existing.wc_expiration_date;
       }
-      // Update provisions if they were unknown
-      if (existing.labor_law_coverage === "unknown" && extracted.labor_law_coverage && extracted.labor_law_coverage !== "unknown") {
-        updates.labor_law_coverage = extracted.labor_law_coverage;
-      }
-      if (existing.action_over === "unknown" && extracted.action_over && extracted.action_over !== "unknown") {
-        updates.action_over = extracted.action_over;
-      }
-      if (existing.hammer_clause === "unknown" && extracted.hammer_clause && extracted.hammer_clause !== "unknown") {
-        updates.hammer_clause = extracted.hammer_clause;
-      }
-      // New fields: always update if extracted and missing
-      if (!existing.gl_per_occurrence_limit && extracted.gl_per_occurrence_limit) {
-        updates.gl_per_occurrence_limit = extracted.gl_per_occurrence_limit;
-      }
-      if (!existing.gl_aggregate_limit && extracted.gl_aggregate_limit) {
-        updates.gl_aggregate_limit = extracted.gl_aggregate_limit;
-      }
-      if (!existing.umbrella_policy_number && extracted.umbrella_policy_number) {
+
+      // Umbrella: overwrite if newer or missing
+      if (extracted.umbrella_policy_number && (!existing.umbrella_policy_number || isNewer(extracted.umbrella_expiration_date, existing.umbrella_expiration_date))) {
         updates.umbrella_policy_number = extracted.umbrella_policy_number;
         updates.umbrella_carrier = extracted.umbrella_carrier || null;
         updates.umbrella_limit = extracted.umbrella_limit || null;
         updates.umbrella_effective_date = extracted.umbrella_effective_date || null;
         updates.umbrella_expiration_date = extracted.umbrella_expiration_date || null;
       }
-      if ((!existing.certificate_holder || existing.certificate_holder === 'unknown') && extracted.certificate_holder) {
+
+      // Provisions: always update if new data is more specific
+      if (extracted.labor_law_coverage && extracted.labor_law_coverage !== "unknown") {
+        updates.labor_law_coverage = extracted.labor_law_coverage;
+      }
+      if (extracted.action_over && extracted.action_over !== "unknown") {
+        updates.action_over = extracted.action_over;
+      }
+      if (extracted.hammer_clause && extracted.hammer_clause !== "unknown") {
+        updates.hammer_clause = extracted.hammer_clause;
+      }
+
+      // Certificate holder & description: always update if extracted
+      if (extracted.certificate_holder && extracted.certificate_holder !== 'unknown') {
         updates.certificate_holder = extracted.certificate_holder;
       }
-      if (!existing.description_of_operations && extracted.description_of_operations) {
+      if (extracted.description_of_operations) {
         updates.description_of_operations = extracted.description_of_operations;
       }
 
