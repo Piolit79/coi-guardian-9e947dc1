@@ -101,7 +101,8 @@ export default function Files() {
     setOpeningPath(filePath);
     try {
       const url = await getSignedFileUrl(filePath);
-      window.location.assign(url);
+      const opened = window.open(url, '_blank', 'noopener,noreferrer');
+      if (!opened) window.location.assign(url);
     } catch (e) {
       console.error('Open failed', e);
       toast.error('Could not open file');
