@@ -2,7 +2,7 @@ import { AppLayout } from '@/components/AppLayout';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
-import { createSignedFileUrl } from '@/lib/storageFile';
+import { downloadStorageFileBlob } from '@/lib/storageFile';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { FileText, Download, Loader2, FolderOpen } from 'lucide-react';
@@ -92,17 +92,18 @@ export default function Files() {
 
   const [openingPath, setOpeningPath] = useState<string | null>(null);
 
-  const getSignedFileUrl = async (filePath: string) => {
-    const { url } = await createSignedFileUrl(filePath, 600);
-    return url;
+  const getFileBlobUrl = async (filePath: string) => {
+    const { blob } = await downloadStorageFileBlob(filePath);
+    return URL.createObjectURL(blob);
   };
 
   const handleOpen = async (filePath: string) => {
     setOpeningPath(filePath);
     try {
-      const url = await getSignedFileUrl(filePath);
-      const opened = window.open(url, '_blank', 'noopener,noreferrer');
-      if (!opened) window.location.assign(url);
+      const blobUrl = await getFileBlobUrl(filePath);
+      const opened = window.open(blobUrl, '_blank', 'noopener,noreferrer');
+      if (!opened) window.location.assign(blobUrl);
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 60_000);
     } catch (e) {
       console.error('Open failed', e);
       toast.error('Could not open file');
@@ -114,12 +115,14 @@ export default function Files() {
   const handleDownload = async (filePath: string) => {
     setOpeningPath(filePath);
     try {
-      const url = await getSignedFileUrl(filePath);
+      const { blob } = await downloadStorageFileBlob(filePath);
+      const blobUrl = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = url;
+      a.href = blobUrl;
       a.download = getDisplayName(filePath);
       document.body.appendChild(a);
       a.click();
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 0);
       a.remove();
     } catch (e) {
       console.error('Download failed', e);
