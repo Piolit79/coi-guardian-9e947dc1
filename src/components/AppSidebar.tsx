@@ -29,12 +29,12 @@ export function AppSidebar() {
     >
       {/* Logo */}
       <div className="flex h-16 items-center gap-3 border-b border-sidebar-border px-4">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-sidebar-accent">
-          <Shield className="h-5 w-5 text-sidebar-primary" />
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded bg-primary/10">
+          <Shield className="h-5 w-5 text-primary" />
         </div>
         {!collapsed && (
           <div className="flex flex-col">
-            <span className="text-sm font-bold text-sidebar-primary">COI Tracker</span>
+            <span className="font-display text-base font-semibold text-foreground">COI Tracker</span>
             <span className="text-[10px] text-sidebar-muted">Insurance Management</span>
           </div>
         )}
