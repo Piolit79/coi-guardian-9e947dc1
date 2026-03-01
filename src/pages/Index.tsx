@@ -6,9 +6,6 @@ import {
   ChevronDown,
   ChevronRight,
   MapPin,
-  Building2,
-  FileText,
-  Calendar,
   Shield,
   FolderKanban,
   AlertTriangle,
@@ -179,23 +176,28 @@ const Index = () => {
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2 mb-0.5">
                                   <span className="text-sm font-medium text-foreground">{coi.company}</span>
-                                  <StatusBadge status={coi.status} daysUntilExpiry={coi.daysUntilExpiry} />
                                 </div>
                                 <p className="text-xs text-muted-foreground">{coi.subcontractor}</p>
                               </div>
-                              <div className="flex items-center gap-4 text-xs text-muted-foreground shrink-0">
-                                <span className="flex items-center gap-1">
-                                  <Building2 className="h-3 w-3" />
-                                  {coi.carrier}
-                                </span>
-                                <span className="flex items-center gap-1">
-                                  <FileText className="h-3 w-3" />
-                                  {coi.policyNumber}
-                                </span>
-                                <span className="flex items-center gap-1">
-                                  <Calendar className="h-3 w-3" />
-                                  {coi.expirationDate}
-                                </span>
+                              <div className="flex items-center gap-5 shrink-0">
+                                {/* COI / GL expiry */}
+                                <div className="text-center">
+                                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-0.5">COI Exp</p>
+                                  <p className="text-xs font-mono font-medium text-foreground">{coi.expirationDate}</p>
+                                  <StatusBadge status={coi.status} daysUntilExpiry={coi.daysUntilExpiry} className="mt-1" />
+                                </div>
+                                {/* WC expiry */}
+                                <div className="text-center">
+                                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-0.5">WC Exp</p>
+                                  {coi.wcPolicy ? (
+                                    <>
+                                      <p className="text-xs font-mono font-medium text-foreground">{coi.wcPolicy.expirationDate}</p>
+                                      <StatusBadge status={coi.wcPolicy.status} daysUntilExpiry={coi.wcPolicy.daysUntilExpiry} className="mt-1" />
+                                    </>
+                                  ) : (
+                                    <p className="text-xs text-muted-foreground italic">N/A</p>
+                                  )}
+                                </div>
                                 {coi.glPolicy && (
                                   <span title="GL Policy on file"><Shield className="h-3.5 w-3.5 text-primary" /></span>
                                 )}
@@ -237,18 +239,50 @@ const Index = () => {
                       <p className="font-medium text-foreground">{selectedCOI.subcontractor}</p>
                     </div>
                     <div>
-                      <span className="text-xs text-muted-foreground">Carrier</span>
+                      <span className="text-xs text-muted-foreground">GL Carrier</span>
                       <p className="font-medium text-foreground">{selectedCOI.carrier}</p>
                     </div>
                     <div>
-                      <span className="text-xs text-muted-foreground">Policy Number</span>
+                      <span className="text-xs text-muted-foreground">GL Policy #</span>
                       <p className="font-mono text-xs font-medium text-foreground">{selectedCOI.policyNumber}</p>
                     </div>
                     <div>
-                      <span className="text-xs text-muted-foreground">Expiration</span>
-                      <p className="font-medium text-foreground">{selectedCOI.expirationDate}</p>
+                      <span className="text-xs text-muted-foreground">COI Expiration</span>
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium text-foreground">{selectedCOI.expirationDate}</p>
+                        <StatusBadge status={selectedCOI.status} daysUntilExpiry={selectedCOI.daysUntilExpiry} />
+                      </div>
                     </div>
                   </div>
+
+                  {/* WC Policy Section */}
+                  {selectedCOI.wcPolicy && (
+                    <div className="rounded-lg border border-border p-4">
+                      <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Workers' Compensation</h4>
+                      <div className="grid grid-cols-2 gap-3 text-sm">
+                        <div>
+                          <span className="text-xs text-muted-foreground">WC Policy #</span>
+                          <p className="font-mono text-xs font-medium text-foreground">{selectedCOI.wcPolicy.policyNumber}</p>
+                        </div>
+                        <div>
+                          <span className="text-xs text-muted-foreground">WC Carrier</span>
+                          <p className="text-xs font-medium text-foreground">{selectedCOI.wcPolicy.carrier}</p>
+                        </div>
+                        <div>
+                          <span className="text-xs text-muted-foreground">Effective</span>
+                          <p className="text-xs font-medium text-foreground">{selectedCOI.wcPolicy.effectiveDate}</p>
+                        </div>
+                        <div>
+                          <span className="text-xs text-muted-foreground">WC Expiration</span>
+                          <div className="flex items-center gap-2">
+                            <p className="text-xs font-medium text-foreground">{selectedCOI.wcPolicy.expirationDate}</p>
+                            <StatusBadge status={selectedCOI.wcPolicy.status} daysUntilExpiry={selectedCOI.wcPolicy.daysUntilExpiry} />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   {selectedCOI.glPolicy && <GLPolicyViewer policy={selectedCOI.glPolicy} />}
                 </div>
               </>

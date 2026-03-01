@@ -16,10 +16,20 @@ export interface GLPolicy {
   fileUrl?: string;
 }
 
+export interface WCPolicy {
+  policyNumber: string;
+  carrier: string;
+  effectiveDate: string;
+  expirationDate: string;
+  status: COIStatus;
+  daysUntilExpiry: number;
+}
+
 export interface COI {
   id: string;
   subcontractor: string;
   company: string;
+  // GL / COI fields
   policyNumber: string;
   carrier: string;
   effectiveDate: string;
@@ -27,6 +37,8 @@ export interface COI {
   status: COIStatus;
   daysUntilExpiry: number;
   glPolicy?: GLPolicy;
+  // Workers' Comp
+  wcPolicy?: WCPolicy;
 }
 
 export interface Project {
