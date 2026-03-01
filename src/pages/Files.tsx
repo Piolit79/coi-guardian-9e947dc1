@@ -2,6 +2,7 @@ import { AppLayout } from '@/components/AppLayout';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
+import { createSignedFileUrl } from '@/lib/storageFile';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { FileText, Download, Loader2, FolderOpen } from 'lucide-react';
@@ -92,17 +93,8 @@ export default function Files() {
   const [openingPath, setOpeningPath] = useState<string | null>(null);
 
   const getSignedFileUrl = async (filePath: string) => {
-    const { data, error } = await supabase.storage
-      .from('certificates')
-      .createSignedUrl(filePath, 600);
-    if (error) throw error;
-
-    const signed = (data as any)?.signedUrl || (data as any)?.signedURL;
-    if (!signed) throw new Error('Unable to create file URL');
-
-    return signed.startsWith('http')
-      ? signed
-      : `${import.meta.env.VITE_SUPABASE_URL}/storage/v1${signed.startsWith('/') ? signed : `/${signed}`}`;
+    const { url } = await createSignedFileUrl(filePath, 600);
+    return url;
   };
 
   const handleOpen = async (filePath: string) => {
