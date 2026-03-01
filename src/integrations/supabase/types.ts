@@ -14,6 +14,41 @@ export type Database = {
   }
   public: {
     Tables: {
+      coi_reminders: {
+        Row: {
+          coi_id: string
+          expiration_date: string
+          id: string
+          policy_type: string
+          reminder_type: string
+          sent_at: string
+        }
+        Insert: {
+          coi_id: string
+          expiration_date: string
+          id?: string
+          policy_type: string
+          reminder_type: string
+          sent_at?: string
+        }
+        Update: {
+          coi_id?: string
+          expiration_date?: string
+          id?: string
+          policy_type?: string
+          reminder_type?: string
+          sent_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coi_reminders_coi_id_fkey"
+            columns: ["coi_id"]
+            isOneToOne: false
+            referencedRelation: "subcontractor_cois"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       gc_settings: {
         Row: {
           additional_insured_required: boolean
@@ -22,6 +57,7 @@ export type Database = {
           created_at: string
           id: string
           min_gl_coverage_limit: string | null
+          notification_email: string | null
           owner_info: string | null
           property_address: string | null
           updated_at: string
@@ -34,6 +70,7 @@ export type Database = {
           created_at?: string
           id?: string
           min_gl_coverage_limit?: string | null
+          notification_email?: string | null
           owner_info?: string | null
           property_address?: string | null
           updated_at?: string
@@ -46,6 +83,7 @@ export type Database = {
           created_at?: string
           id?: string
           min_gl_coverage_limit?: string | null
+          notification_email?: string | null
           owner_info?: string | null
           property_address?: string | null
           updated_at?: string
