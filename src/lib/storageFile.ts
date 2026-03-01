@@ -5,6 +5,11 @@ type SignedUrlResult = {
   resolvedPath: string;
 };
 
+type FileBlobResult = {
+  blob: Blob;
+  resolvedPath: string;
+};
+
 const STORAGE_PREFIX_REGEX = /^(uploads\/|agreements\/|policies\/)/i;
 
 function toAbsoluteStorageUrl(signedUrl: string): string {
@@ -29,34 +34,61 @@ function getPathCandidates(filePath: string): string[] {
   return [...new Set(candidates)];
 }
 
+export async function resolveStoragePath(filePath: string, bucket = 'certificates'): Promise<string> {
+  const candidates = getPathCandidates(filePath);
+  for (const candidate of candidates) {
+    const { data, error } = await supabase.storage.from(bucket).download(candidate);
+    if (!error && data) return candidate;
+  }
+  throw new Error(`Unable to resolve storage path for ${filePath}`);
+}
+
+export async function downloadStorageFileBlob(
+  filePath: string,
+  bucket = 'certificates'
+): Promise<FileBlobResult> {
+  const candidates = getPathCandidates(filePath);
+  let lastError: unknown;
+
+  for (const candidate of candidates) {
+    const { data, error } = await supabase.storage.from(bucket).download(candidate);
+
+    if (error || !data) {
+      lastError = error;
+      continue;
+    }
+
+    return { blob: data, resolvedPath: candidate };
+  }
+
+  throw new Error(
+    `Unable to download file for ${filePath}${lastError ? `: ${(lastError as Error)?.message || 'unknown error'}` : ''}`
+  );
+}
+
 export async function createSignedFileUrl(
   filePath: string,
   expiresInSeconds = 600,
   bucket = 'certificates'
 ): Promise<SignedUrlResult> {
-  const candidates = getPathCandidates(filePath);
-  let lastError: unknown;
+  const resolvedPath = await resolveStoragePath(filePath, bucket);
 
-  for (const candidate of candidates) {
-    const { data, error } = await supabase.storage
-      .from(bucket)
-      .createSignedUrl(candidate, expiresInSeconds);
+  const { data, error } = await supabase.storage
+    .from(bucket)
+    .createSignedUrl(resolvedPath, expiresInSeconds);
 
-    if (error) {
-      lastError = error;
-      continue;
-    }
-
-    const signed = (data as any)?.signedUrl || (data as any)?.signedURL;
-    if (!signed) continue;
-
-    return {
-      url: toAbsoluteStorageUrl(signed),
-      resolvedPath: candidate,
-    };
+  if (error) {
+    throw new Error(`Unable to create signed URL for ${filePath}: ${error.message}`);
   }
 
-  throw new Error(
-    `Unable to create signed URL for ${filePath}${lastError ? `: ${(lastError as Error)?.message || 'unknown error'}` : ''}`
-  );
+  const signed = (data as any)?.signedUrl || (data as any)?.signedURL;
+  if (!signed) {
+    throw new Error(`Unable to create signed URL for ${filePath}: missing signed URL`);
+  }
+
+  return {
+    url: toAbsoluteStorageUrl(signed),
+    resolvedPath,
+  };
 }
+

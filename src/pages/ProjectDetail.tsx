@@ -22,7 +22,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { StatusBadge } from '@/components/StatusBadge';
-import { createSignedFileUrl } from '@/lib/storageFile';
+import { downloadStorageFileBlob } from '@/lib/storageFile';
 import { cn } from '@/lib/utils';
 
 function CoverageComplianceCheck({ label, value, minValue }: { label: string; value: string; minValue: string }) {
@@ -54,9 +54,11 @@ function FileViewButton({ filePath, label }: { filePath: string; label: string }
   const openFile = async () => {
     setLoading(true);
     try {
-      const { url } = await createSignedFileUrl(filePath, 300);
-      const opened = window.open(url, '_blank', 'noopener,noreferrer');
-      if (!opened) window.location.href = url;
+      const { blob } = await downloadStorageFileBlob(filePath);
+      const blobUrl = URL.createObjectURL(blob);
+      const opened = window.open(blobUrl, '_blank', 'noopener,noreferrer');
+      if (!opened) window.location.href = blobUrl;
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 60_000);
     } catch (e) {
       console.error(e);
     } finally {

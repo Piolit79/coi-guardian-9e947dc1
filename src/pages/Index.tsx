@@ -40,7 +40,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { createSignedFileUrl } from '@/lib/storageFile';
+import { downloadStorageFileBlob } from '@/lib/storageFile';
 import { parseISO, format, isValid } from 'date-fns';
 
 const projectStatusStyles: Record<string, string> = {
@@ -58,9 +58,11 @@ const Index = () => {
 
   const openFile = async (filePath: string) => {
     try {
-      const { url } = await createSignedFileUrl(filePath, 300);
-      const opened = window.open(url, '_blank', 'noopener,noreferrer');
-      if (!opened) window.location.href = url;
+      const { blob } = await downloadStorageFileBlob(filePath);
+      const blobUrl = URL.createObjectURL(blob);
+      const opened = window.open(blobUrl, '_blank', 'noopener,noreferrer');
+      if (!opened) window.location.href = blobUrl;
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 60_000);
     } catch (e) {
       console.error(e);
     }
