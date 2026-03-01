@@ -25,6 +25,14 @@ export const mockCOIs: COI[] = [
         { name: 'Waiver of Subrogation', status: 'included' },
       ],
     },
+    wcPolicy: {
+      policyNumber: 'WC-2024-44210',
+      carrier: 'Hartford Insurance',
+      effectiveDate: '2025-01-15',
+      expirationDate: '2026-01-15',
+      status: 'valid',
+      daysUntilExpiry: 320,
+    },
   },
   {
     id: '2',
@@ -50,6 +58,14 @@ export const mockCOIs: COI[] = [
         { name: 'Waiver of Subrogation', status: 'unknown' },
       ],
     },
+    wcPolicy: {
+      policyNumber: 'WC-2025-11099',
+      carrier: 'State Fund',
+      effectiveDate: '2025-04-01',
+      expirationDate: '2026-04-01',
+      status: 'expiring',
+      daysUntilExpiry: 13,
+    },
   },
   {
     id: '3',
@@ -61,6 +77,14 @@ export const mockCOIs: COI[] = [
     expirationDate: '2025-03-01',
     status: 'expired',
     daysUntilExpiry: -365,
+    wcPolicy: {
+      policyNumber: 'WC-2024-78800',
+      carrier: 'Liberty Mutual',
+      effectiveDate: '2024-03-01',
+      expirationDate: '2025-03-01',
+      status: 'expired',
+      daysUntilExpiry: -365,
+    },
   },
   {
     id: '4',
@@ -85,6 +109,14 @@ export const mockCOIs: COI[] = [
         { name: 'Additional Insured', status: 'included' },
         { name: 'Waiver of Subrogation', status: 'included' },
       ],
+    },
+    wcPolicy: {
+      policyNumber: 'WC-2025-33400',
+      carrier: 'NYSIF',
+      effectiveDate: '2025-05-01',
+      expirationDate: '2026-05-01',
+      status: 'valid',
+      daysUntilExpiry: 61,
     },
   },
 ];
