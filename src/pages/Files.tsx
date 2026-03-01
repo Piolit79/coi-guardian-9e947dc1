@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { FileText, Download, Loader2, FolderOpen, ExternalLink, X } from 'lucide-react';
+import { FileText, Download, Loader2, FolderOpen } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 
@@ -89,27 +89,27 @@ export default function Files() {
     },
   });
 
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [previewName, setPreviewName] = useState<string>('');
   const [openingPath, setOpeningPath] = useState<string | null>(null);
+
+  const getSignedFileUrl = async (filePath: string) => {
+    const { data, error } = await supabase.storage
+      .from('certificates')
+      .createSignedUrl(filePath, 600);
+    if (error) throw error;
+
+    const signed = (data as any)?.signedUrl || (data as any)?.signedURL;
+    if (!signed) throw new Error('Unable to create file URL');
+
+    return signed.startsWith('http')
+      ? signed
+      : `${import.meta.env.VITE_SUPABASE_URL}/storage/v1${signed.startsWith('/') ? signed : `/${signed}`}`;
+  };
 
   const handleOpen = async (filePath: string) => {
     setOpeningPath(filePath);
     try {
-      const { data, error } = await supabase.storage
-        .from('certificates')
-        .createSignedUrl(filePath, 600);
-      if (error) throw error;
-
-      const signed = (data as any)?.signedUrl || (data as any)?.signedURL;
-      if (!signed) throw new Error('Unable to create preview URL');
-
-      const fullUrl = signed.startsWith('http')
-        ? signed
-        : `${import.meta.env.VITE_SUPABASE_URL}/storage/v1${signed.startsWith('/') ? signed : `/${signed}`}`;
-
-      setPreviewUrl(fullUrl);
-      setPreviewName(getDisplayName(filePath));
+      const url = await getSignedFileUrl(filePath);
+      window.location.assign(url);
     } catch (e) {
       console.error('Open failed', e);
       toast.error('Could not open file');
@@ -118,14 +118,22 @@ export default function Files() {
     }
   };
 
-  const handleDownload = () => {
-    if (!previewUrl) return;
-    const a = document.createElement('a');
-    a.href = previewUrl;
-    a.download = previewName || 'document';
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
+  const handleDownload = async (filePath: string) => {
+    setOpeningPath(filePath);
+    try {
+      const url = await getSignedFileUrl(filePath);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = getDisplayName(filePath);
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    } catch (e) {
+      console.error('Download failed', e);
+      toast.error('Could not download file');
+    } finally {
+      setOpeningPath(null);
+    }
   };
 
   // Group files by folder
@@ -145,35 +153,6 @@ export default function Files() {
           <p className="text-sm text-muted-foreground mt-1">All uploaded certificates, policies, and agreements</p>
         </div>
 
-        {previewUrl && (
-          <Card className="mb-6 border border-border overflow-hidden">
-            <div className="flex items-center justify-between border-b border-border px-4 py-2.5">
-              <p className="text-sm font-medium text-foreground truncate">{previewName}</p>
-              <div className="flex items-center gap-2">
-                <Button variant="ghost" size="sm" className="h-7 gap-1.5 text-xs" onClick={() => window.open(previewUrl, '_blank', 'noopener,noreferrer')}>
-                  <ExternalLink className="h-3 w-3" />
-                  New Tab
-                </Button>
-                <Button variant="ghost" size="sm" className="h-7 gap-1.5 text-xs" onClick={handleDownload}>
-                  <Download className="h-3 w-3" />
-                  Download
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7"
-                  onClick={() => {
-                    setPreviewUrl(null);
-                    setPreviewName('');
-                  }}
-                >
-                  <X className="h-3.5 w-3.5" />
-                </Button>
-              </div>
-            </div>
-            <iframe src={previewUrl} title={previewName} className="h-[70vh] w-full" />
-          </Card>
-        )}
 
         {isLoading ? (
           <div className="flex items-center justify-center py-20">
@@ -214,9 +193,18 @@ export default function Files() {
                             {file.created_at && ` · ${format(new Date(file.created_at), 'MMM d, yyyy h:mm a')}`}
                           </p>
                         </div>
-                        <Button variant="ghost" size="sm" className="shrink-0 gap-1.5 text-xs h-7 px-2" disabled={openingPath === file.name}>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="shrink-0 gap-1.5 text-xs h-7 px-2"
+                          disabled={openingPath === file.name}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            void handleDownload(file.name);
+                          }}
+                        >
                           {openingPath === file.name ? <Loader2 className="h-3 w-3 animate-spin" /> : <Download className="h-3 w-3" />}
-                          Open
+                          Download
                         </Button>
                       </Card>
                     ))}
