@@ -225,12 +225,6 @@ export function COIDetailContent({ coi, projectId, projectName, settings, footer
           </div>
         </div>
 
-        {/* Contact Emails (stored in localStorage) */}
-        <COIContactEmails coiId={coi.id} />
-
-        {/* Send Reminder Email */}
-        <SendReminderButton coi={coi} projectId={projectId} projectName={projectName} />
-
         {/* GL Details */}
         {coi.glPolicy && (
           <div className="rounded-lg border border-border p-4">
@@ -332,6 +326,12 @@ export function COIDetailContent({ coi, projectId, projectName, settings, footer
             <p className="text-xs font-medium text-status-expired">Workers' Compensation policy required but not provided</p>
           </div>
         ) : null}
+
+        {/* Contact Emails (stored in localStorage) */}
+        <COIContactEmails coiId={coi.id} />
+
+        {/* Send Reminder Email */}
+        <SendReminderButton coi={coi} projectId={projectId} projectName={projectName} />
 
         {/* Documents */}
         <div className="rounded-lg border border-border p-4">
