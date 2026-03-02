@@ -3,6 +3,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useProjects } from '@/hooks/useProjects';
 import { useAllCOIs } from '@/hooks/useCOIs';
+import { useInactiveCOIs } from '@/hooks/useInactiveCOIs';
 import { useGCSettings } from '@/hooks/useGCSettings';
 import { StatusBadge } from '@/components/StatusBadge';
 import { ComplianceBadge } from '@/components/ComplianceBadge';
@@ -91,6 +92,7 @@ const Index = () => {
   const { data: projects, isLoading: projLoading } = useProjects();
   const { data: allCois } = useAllCOIs();
   const { data: settings } = useGCSettings();
+  const { inactiveIds } = useInactiveCOIs();
   const [expandedProjects, setExpandedProjects] = useState<Set<string>>(new Set());
   const [selectedCOI, setSelectedCOI] = useState<(COI & { project_id?: string }) | null>(null);
 
@@ -109,7 +111,7 @@ const Index = () => {
 
     // useAllCOIs is already ordered by created_at desc, so first seen = latest record
     // Only include active COIs
-    (allCois || []).filter(c => c.is_active !== false).forEach((coi) => {
+    (allCois || []).filter(c => !inactiveIds.has(c.id)).forEach((coi) => {
       const subcontractorKey = (coi.subcontractor || '')
         .trim()
         .toLowerCase()
@@ -122,7 +124,7 @@ const Index = () => {
     });
 
     return Array.from(latestBySubcontractor.values());
-  }, [allCois]);
+  }, [allCois, inactiveIds]);
 
   const validCount = dashboardCois.filter(c => c.status === 'valid').length;
   const expiringCount = dashboardCois.filter(c => c.status === 'expiring').length;
@@ -179,7 +181,7 @@ const Index = () => {
   ];
 
   // Group all COIs by project (no dedup — matches what the Projects page shows)
-  const coisByProject = (allCois || []).filter(c => c.is_active !== false).reduce<Record<string, (COI & { project_id: string })[]>>((acc, coi) => {
+  const coisByProject = (allCois || []).filter(c => !inactiveIds.has(c.id)).reduce<Record<string, (COI & { project_id: string })[]>>((acc, coi) => {
     (acc[coi.project_id] = acc[coi.project_id] || []).push(coi);
     return acc;
   }, {});

@@ -32,7 +32,6 @@ export interface DBCoi {
   coi_file_path: string | null;
   gl_policy_file_path: string | null;
   created_at: string;
-  is_active: boolean;
 }
 
 function dbCoiToAppCoi(row: DBCoi): COI {
@@ -80,7 +79,6 @@ function dbCoiToAppCoi(row: DBCoi): COI {
     additional_insured: (row as any).additional_insured || 'unknown',
     certificate_holder: (row as any).certificate_holder || 'unknown',
     description_of_operations: (row as any).description_of_operations || '',
-    is_active: row.is_active !== false,
     umbrellaPolicy: (row as any).umbrella_policy_number ? {
       policyNumber: (row as any).umbrella_policy_number,
       carrier: (row as any).umbrella_carrier || '',
@@ -155,25 +153,6 @@ export function useCreateCOI() {
     },
     onSuccess: (_data, vars) => {
       qc.invalidateQueries({ queryKey: ['cois', vars.project_id] });
-      qc.invalidateQueries({ queryKey: ['cois', 'all'] });
-      qc.invalidateQueries({ queryKey: ['projects'] });
-    },
-  });
-}
-
-export function useToggleCOIActive() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async ({ id, projectId, is_active }: { id: string; projectId: string; is_active: boolean }) => {
-      const { error } = await supabase
-        .from('subcontractor_cois')
-        .update({ is_active } as any)
-        .eq('id', id);
-      if (error) throw error;
-      return { projectId };
-    },
-    onSuccess: (_data, vars) => {
-      qc.invalidateQueries({ queryKey: ['cois', vars.projectId] });
       qc.invalidateQueries({ queryKey: ['cois', 'all'] });
       qc.invalidateQueries({ queryKey: ['projects'] });
     },

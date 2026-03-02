@@ -1,7 +1,8 @@
 import { useParams, Link } from 'react-router-dom';
 import { AppLayout } from '@/components/AppLayout';
 import { useProject } from '@/hooks/useProjects';
-import { useProjectCOIs, useDeleteCOI, useToggleCOIActive } from '@/hooks/useCOIs';
+import { useProjectCOIs, useDeleteCOI } from '@/hooks/useCOIs';
+import { useInactiveCOIs } from '@/hooks/useInactiveCOIs';
 import { COICard } from '@/components/COICard';
 import { DropZone } from '@/components/DropZone';
 import { GLPolicyViewer } from '@/components/GLPolicyViewer';
@@ -87,7 +88,7 @@ export default function ProjectDetail() {
   const [selectedCOI, setSelectedCOI] = useState<COI | null>(null);
   const [editingCOI, setEditingCOI] = useState<COI | null>(null);
   const deleteCOI = useDeleteCOI();
-  const toggleActive = useToggleCOIActive();
+  const { inactiveIds, toggleActive } = useInactiveCOIs();
 
   if (projLoading) {
     return (
@@ -144,11 +145,9 @@ export default function ProjectDetail() {
             {(cois || []).map((coi) => (
               <COICard
                 key={coi.id}
-                coi={coi}
+                coi={{ ...coi, is_active: !inactiveIds.has(coi.id) }}
                 onClick={setSelectedCOI}
-                onToggleActive={(c, isActive) =>
-                  toggleActive.mutate({ id: c.id, projectId: project.id, is_active: isActive })
-                }
+                onToggleActive={(c, isActive) => toggleActive(c.id, isActive)}
               />
             ))}
           </div>
