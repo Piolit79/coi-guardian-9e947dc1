@@ -13,7 +13,8 @@ import { ComplianceBadge } from '@/components/ComplianceBadge';
 import { useGCSettings } from '@/hooks/useGCSettings';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, MapPin, Loader2, FileText, ExternalLink, CheckCircle2, XCircle, AlertTriangle, Trash2 } from 'lucide-react';
+import { ArrowLeft, MapPin, Loader2, FileText, ExternalLink, CheckCircle2, XCircle, AlertTriangle, Trash2, PowerOff } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
 import { COI, getStatusFromDays } from '@/types/coi';
 import { useState } from 'react';
 import {
@@ -147,7 +148,6 @@ export default function ProjectDetail() {
                 key={coi.id}
                 coi={{ ...coi, is_active: !inactiveIds.has(coi.id) }}
                 onClick={setSelectedCOI}
-                onToggleActive={(c, isActive) => toggleActive(c.id, isActive)}
               />
             ))}
           </div>
@@ -364,6 +364,16 @@ export default function ProjectDetail() {
                       <Trash2 className="h-3.5 w-3.5" />
                       Delete COI
                     </Button>
+                    <div className="ml-auto flex items-center gap-2">
+                      <PowerOff className={cn('h-3.5 w-3.5', inactiveIds.has(selectedCOI.id) ? 'text-muted-foreground' : 'text-status-valid')} />
+                      <span className="text-xs text-muted-foreground">
+                        {inactiveIds.has(selectedCOI.id) ? 'Inactive' : 'Active'}
+                      </span>
+                      <Switch
+                        checked={!inactiveIds.has(selectedCOI.id)}
+                        onCheckedChange={(checked) => toggleActive(selectedCOI.id, checked)}
+                      />
+                    </div>
                   </div>
               </>
             )}

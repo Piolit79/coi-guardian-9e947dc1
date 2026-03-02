@@ -2,17 +2,15 @@ import { COI } from '@/types/coi';
 import { StatusBadge } from './StatusBadge';
 import { ComplianceBadge } from './ComplianceBadge';
 import { Card } from '@/components/ui/card';
-import { Switch } from '@/components/ui/switch';
 import { Building2, Calendar, FileText, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface COICardProps {
   coi: COI;
   onClick?: (coi: COI) => void;
-  onToggleActive?: (coi: COI, isActive: boolean) => void;
 }
 
-export function COICard({ coi, onClick, onToggleActive }: COICardProps) {
+export function COICard({ coi, onClick }: COICardProps) {
   const isActive = coi.is_active !== false;
 
   return (
@@ -37,19 +35,7 @@ export function COICard({ coi, onClick, onToggleActive }: COICardProps) {
           </div>
           <p className="text-xs text-muted-foreground">{coi.carrier}</p>
         </div>
-        <div className="flex items-center gap-2 shrink-0 ml-2">
-          {onToggleActive && (
-            <Switch
-              checked={isActive}
-              onCheckedChange={(checked) => {
-                onToggleActive(coi, checked);
-              }}
-              onClick={(e) => e.stopPropagation()}
-              className="scale-75"
-            />
-          )}
-          <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity mt-0.5" />
-        </div>
+        <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0 mt-1" />
       </div>
 
       <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5 text-xs text-muted-foreground">
