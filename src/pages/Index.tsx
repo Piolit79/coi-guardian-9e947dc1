@@ -471,7 +471,10 @@ const Index = () => {
           </div>
         </div>
 
-        <h2 className="text-sm font-semibold text-foreground mb-3">Projects</h2>
+        <div className="flex items-center gap-2 mb-3">
+          <FolderKanban className="h-4 w-4 text-primary" />
+          <h2 className="text-sm font-semibold text-foreground">Projects</h2>
+        </div>
         {(projects || []).length === 0 ? <Card className="border border-dashed border-border p-8 text-center">
             <p className="text-sm text-muted-foreground">No projects yet. Go to Projects to create one.</p>
           </Card> : <div className="space-y-3">
