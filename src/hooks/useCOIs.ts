@@ -98,7 +98,7 @@ export function useProjectCOIs(projectId: string | undefined) {
         .from('subcontractor_cois')
         .select('*')
         .eq('project_id', projectId!)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: true });
       if (error) throw error;
       return (data || []).map(dbCoiToAppCoi);
     },
@@ -114,7 +114,7 @@ export function useAllCOIs() {
       const { data, error } = await supabase
         .from('subcontractor_cois')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: true });
       if (error) throw error;
       return (data || []).map(row => ({ ...dbCoiToAppCoi(row), project_id: row.project_id }));
     },
