@@ -28,7 +28,6 @@ interface SectionSources {
   gl: Source;
   wc: Source;
   umbrella: Source;
-  files: Source;
 }
 
 function pick<T>(a: T, b: T, source: Source): T {
@@ -38,7 +37,6 @@ function pick<T>(a: T, b: T, source: Source): T {
 function hasGL(coi: COI) { return !!(coi.glPolicy?.policyNumber || coi.policyNumber); }
 function hasWC(coi: COI) { return !!coi.wcPolicy?.policyNumber; }
 function hasUmbrella(coi: COI) { return !!coi.umbrellaPolicy?.policyNumber; }
-function hasFiles(coi: COI) { return !!(coi.coi_file_path || coi.gl_policy_file_path); }
 
 function toInputDate(d: string): string {
   if (!d) return '';
@@ -115,7 +113,6 @@ export function MergeCOIDialog({ projectId, cois, open, onClose }: Props) {
       gl: autoSource(hasGL(coiA), hasGL(coiB)),
       wc: autoSource(hasWC(coiA), hasWC(coiB)),
       umbrella: autoSource(hasUmbrella(coiA), hasUmbrella(coiB)),
-      files: autoSource(hasFiles(coiA), hasFiles(coiB)),
     });
     setStep(2);
   };
@@ -127,7 +124,6 @@ export function MergeCOIDialog({ projectId, cois, open, onClose }: Props) {
       const gl = pick(coiA, coiB, sources.gl);
       const wc = pick(coiA, coiB, sources.wc);
       const umb = pick(coiA, coiB, sources.umbrella);
-      const files = pick(coiA, coiB, sources.files);
       const gen = pick(coiA, coiB, sources.general);
 
       const merged = {
@@ -152,9 +148,9 @@ export function MergeCOIDialog({ projectId, cois, open, onClose }: Props) {
         umbrella_limit: umb.umbrellaPolicy?.limit || null,
         umbrella_effective_date: toInputDate(umb.umbrellaPolicy?.effectiveDate || '') || null,
         umbrella_expiration_date: toInputDate(umb.umbrellaPolicy?.expirationDate || '') || null,
-        // Files
-        coi_file_path: files.coi_file_path || null,
-        gl_policy_file_path: files.gl_policy_file_path || null,
+        // Files — always keep both: prefer A, fallback to B for each independently
+        coi_file_path: coiA.coi_file_path || coiB.coi_file_path || null,
+        gl_policy_file_path: coiA.gl_policy_file_path || coiB.gl_policy_file_path || null,
       };
 
       const { error: updateErr } = await supabase
@@ -293,15 +289,12 @@ export function MergeCOIDialog({ projectId, cois, open, onClose }: Props) {
               aHint={coiA.umbrellaPolicy?.expirationDate ? `Exp. ${coiA.umbrellaPolicy.expirationDate}` : undefined}
               bHint={coiB.umbrellaPolicy?.expirationDate ? `Exp. ${coiB.umbrellaPolicy.expirationDate}` : undefined}
             />
-            <SourceToggle
-              label="Files"
-              source={sources.files}
-              onToggle={s => setSources(p => ({ ...p, files: s }))}
-              aLabel={coiA.coi_file_path ? 'COI PDF' : coiA.gl_policy_file_path ? 'GL Policy PDF' : '— No files'}
-              bLabel={coiB.coi_file_path ? 'COI PDF' : coiB.gl_policy_file_path ? 'GL Policy PDF' : '— No files'}
-              aHint={coiA.gl_policy_file_path ? '+ GL Policy PDF' : undefined}
-              bHint={coiB.gl_policy_file_path ? '+ GL Policy PDF' : undefined}
-            />
+            <div className="flex items-start gap-3 rounded-lg border border-border p-3">
+              <span className="text-xs font-medium text-muted-foreground w-20 shrink-0">Files</span>
+              <p className="text-xs text-muted-foreground">
+                All uploaded files from both COIs will be kept — COI PDFs and GL policy PDFs are preserved independently.
+              </p>
+            </div>
 
             <p className="text-[11px] text-muted-foreground pt-1">
               The result will be saved to <span className="font-medium text-foreground">{coiA.subcontractor}</span>'s record. <span className="font-medium text-foreground">{coiB.subcontractor}</span>'s record will be permanently deleted.
