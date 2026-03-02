@@ -198,21 +198,21 @@ const Index = () => {
 
   return (
     <AppLayout>
-      <div className="p-6 lg:p-8 max-w-7xl">
+      <div className="p-4 sm:p-6 lg:p-8 max-w-7xl">
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
           <p className="text-sm text-muted-foreground mt-1">Certificate of Insurance overview</p>
         </div>
 
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-8">
           {stats.map((stat) => (
-            <Card key={stat.label} className="flex items-center gap-4 border border-border p-4">
-              <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${stat.bg}`}>
-                <stat.icon className={`h-5 w-5 ${stat.color}`} />
+            <Card key={stat.label} className="flex items-center gap-3 sm:gap-4 border border-border p-3 sm:p-4">
+              <div className={`flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-lg ${stat.bg} shrink-0`}>
+                <stat.icon className={`h-4 w-4 sm:h-5 sm:w-5 ${stat.color}`} />
               </div>
-              <div>
-                <p className="text-2xl font-bold text-foreground">{stat.value}</p>
-                <p className="text-xs text-muted-foreground">{stat.label}</p>
+              <div className="min-w-0">
+                <p className="text-xl sm:text-2xl font-bold text-foreground">{stat.value}</p>
+                <p className="text-[10px] sm:text-xs text-muted-foreground truncate">{stat.label}</p>
               </div>
             </Card>
           ))}
