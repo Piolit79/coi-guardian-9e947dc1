@@ -204,7 +204,7 @@ const Index = () => {
     <AppLayout>
       <div className="p-6 lg:p-8 max-w-7xl">
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-foreground">Certificate of Insurance Dashboard</h1>
+          <h1 className="text-2xl font-bold text-foreground">COI Dashboard</h1>
           <p className="text-sm text-muted-foreground mt-1">
 
 
@@ -395,8 +395,8 @@ const Index = () => {
         </div>
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          {stats.map((stat) => (
-            <HoverCard key={stat.label} openDelay={200} closeDelay={100}>
+          {stats.map((stat) =>
+          <HoverCard key={stat.label} openDelay={200} closeDelay={100}>
               <HoverCardTrigger asChild>
                 <Card className="flex items-center gap-4 border border-border p-4 cursor-default hover:shadow-md transition-shadow">
                   <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${stat.bg}`}>
@@ -412,20 +412,20 @@ const Index = () => {
                 <div className="px-3 py-2 border-b border-border">
                   <p className="text-xs font-semibold text-foreground">{stat.label} ({stat.value})</p>
                 </div>
-                {stat.items.length === 0 ? (
-                  <p className="text-xs text-muted-foreground px-3 py-3">None</p>
-                ) : (
-                  <ScrollArea className={stat.items.length > 12 ? "max-h-72" : ""}>
+                {stat.items.length === 0 ?
+              <p className="text-xs text-muted-foreground px-3 py-3">None</p> :
+
+              <ScrollArea className={stat.items.length > 12 ? "max-h-72" : ""}>
                     <div className="px-3 py-2 space-y-1.5">
-                      {stat.items.map((item, i) => (
-                        <p key={i} className="text-xs text-muted-foreground">{item}</p>
-                      ))}
+                      {stat.items.map((item, i) =>
+                  <p key={i} className="text-xs text-muted-foreground">{item}</p>
+                  )}
                     </div>
                   </ScrollArea>
-                )}
+              }
               </HoverCardContent>
             </HoverCard>
-          ))}
+          )}
         </div>
 
         {/* Alerts & Calendar Section */}
