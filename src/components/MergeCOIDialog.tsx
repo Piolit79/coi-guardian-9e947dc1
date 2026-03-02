@@ -104,7 +104,7 @@ export function MergeCOIDialog({ projectId, cois, open, onClose }: Props) {
 
   // Auto-pick the source with more data for each section
   const autoSource = (a: boolean, b: boolean): Source => (!a && b ? 'b' : 'a');
-  const [sources, setSources] = useState<SectionSources>({ general: 'a', gl: 'a', wc: 'a', umbrella: 'a', files: 'a' });
+  const [sources, setSources] = useState<SectionSources>({ general: 'a', gl: 'a', wc: 'a', umbrella: 'a' });
 
   const handleNext = () => {
     if (!coiA || !coiB) return;
