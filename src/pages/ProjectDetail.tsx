@@ -1,6 +1,6 @@
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { AppLayout } from '@/components/AppLayout';
-import { useProject } from '@/hooks/useProjects';
+import { useProject, useDeleteProject } from '@/hooks/useProjects';
 import { useProjectCOIs, useDeleteCOI } from '@/hooks/useCOIs';
 import { useInactiveCOIs } from '@/hooks/useInactiveCOIs';
 import { COICard } from '@/components/COICard';
@@ -23,6 +23,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { StatusBadge } from '@/components/StatusBadge';
 import { createSignedFileUrl } from '@/lib/storageFile';
 import { useEffect } from 'react';
@@ -83,12 +93,15 @@ function FileViewButton({ filePath, label }: { filePath: string; label: string }
 
 export default function ProjectDetail() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { data: project, isLoading: projLoading } = useProject(id);
   const { data: cois, isLoading: coisLoading } = useProjectCOIs(id);
   const { data: settings } = useGCSettings();
   const [selectedCOI, setSelectedCOI] = useState<COI | null>(null);
   const [editingCOI, setEditingCOI] = useState<COI | null>(null);
+  const [showDeleteProject, setShowDeleteProject] = useState(false);
   const deleteCOI = useDeleteCOI();
+  const deleteProject = useDeleteProject();
   const { inactiveIds, toggleActive } = useInactiveCOIs();
 
   if (projLoading) {
@@ -388,6 +401,42 @@ export default function ProjectDetail() {
             onClose={() => setEditingCOI(null)}
           />
         )}
+
+        <div className="mt-12 pt-6 border-t border-border">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-destructive hover:text-destructive hover:bg-destructive/10 gap-1.5 text-xs"
+            onClick={() => setShowDeleteProject(true)}
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+            Delete Project
+          </Button>
+        </div>
+
+        <AlertDialog open={showDeleteProject} onOpenChange={setShowDeleteProject}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete "{project.name}"?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will permanently delete the project and all associated COIs and uploaded files. This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                onClick={() => {
+                  deleteProject.mutate(project.id, {
+                    onSuccess: () => navigate('/projects'),
+                  });
+                }}
+              >
+                {deleteProject.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Delete Project'}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </AppLayout>
   );

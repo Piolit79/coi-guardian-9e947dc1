@@ -80,6 +80,33 @@ export function useProject(id: string | undefined) {
   });
 }
 
+export function useDeleteProject() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (projectId: string) => {
+      // Fetch file paths for all COIs in this project
+      const { data: cois } = await supabase
+        .from('subcontractor_cois')
+        .select('coi_file_path, gl_policy_file_path')
+        .eq('project_id', projectId);
+
+      // Delete associated storage files
+      const filePaths = (cois || []).flatMap(c => [c.coi_file_path, c.gl_policy_file_path].filter(Boolean) as string[]);
+      if (filePaths.length > 0) {
+        await supabase.storage.from('certificates').remove(filePaths);
+      }
+
+      // Delete project (cascade deletes COIs in DB)
+      const { error } = await supabase.from('projects').delete().eq('id', projectId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['projects'] });
+      qc.invalidateQueries({ queryKey: ['cois'] });
+    },
+  });
+}
+
 export function useCreateProject() {
   const qc = useQueryClient();
   return useMutation({
