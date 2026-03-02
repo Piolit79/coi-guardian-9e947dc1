@@ -22,6 +22,9 @@ serve(async (req) => {
     const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
     if (!RESEND_API_KEY) throw new Error("RESEND_API_KEY is not configured");
 
+    const url = new URL(req.url);
+    const isTest = url.searchParams.get("test") === "true";
+
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
@@ -38,6 +41,37 @@ serve(async (req) => {
     if (!toEmail) {
       return new Response(
         JSON.stringify({ message: "No notification email configured in Settings. Skipping." }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Test mode: send a simple test email and return early
+    if (isTest) {
+      const testResp = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${RESEND_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          from: "COI Tracker <onboarding@resend.dev>",
+          to: [toEmail],
+          subject: "COI Tracker — Test Email",
+          html: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #1a1a1a;">Test Email</h2>
+            <p>Your COI Tracker email notifications are working correctly.</p>
+            <p>Notifications will be sent to: <strong>${toEmail}</strong></p>
+          </div>`,
+        }),
+      });
+
+      if (!testResp.ok) {
+        const errBody = await testResp.text();
+        throw new Error(`Failed to send test email: ${testResp.status} — ${errBody}`);
+      }
+
+      return new Response(
+        JSON.stringify({ success: true, message: `Test email sent to ${toEmail}` }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
