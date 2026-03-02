@@ -1,5 +1,5 @@
 import { ReactNode, useState, useEffect } from 'react';
-import { CheckCircle2, XCircle, AlertTriangle, Loader2, ExternalLink } from 'lucide-react';
+import { CheckCircle2, XCircle, AlertTriangle, Loader2, ExternalLink, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { StatusBadge } from '@/components/StatusBadge';
 import { ComplianceBadge } from '@/components/ComplianceBadge';
@@ -82,6 +82,27 @@ export function COIDetailContent({ coi, projectId, settings, footer }: COIDetail
             <p className="font-medium text-foreground">{coi.carrier}</p>
           </div>
         </div>
+
+        {/* Contact Emails */}
+        {(coi.contact_email_1 || coi.contact_email_2) && (
+          <div className="rounded-lg border border-border p-4">
+            <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Contact</h4>
+            <div className="space-y-2">
+              {coi.contact_email_1 && (
+                <a href={`mailto:${coi.contact_email_1}`} className="flex items-center gap-2 text-xs text-foreground hover:text-primary transition-colors">
+                  <Mail className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                  {coi.contact_email_1}
+                </a>
+              )}
+              {coi.contact_email_2 && (
+                <a href={`mailto:${coi.contact_email_2}`} className="flex items-center gap-2 text-xs text-foreground hover:text-primary transition-colors">
+                  <Mail className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                  {coi.contact_email_2}
+                </a>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* GL Details */}
         {coi.glPolicy && (

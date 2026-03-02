@@ -31,6 +31,8 @@ export interface DBCoi {
   wc_expiration_date: string | null;
   coi_file_path: string | null;
   gl_policy_file_path: string | null;
+  contact_email_1: string | null;
+  contact_email_2: string | null;
   created_at: string;
 }
 
@@ -76,6 +78,8 @@ function dbCoiToAppCoi(row: DBCoi): COI {
     } : undefined,
     gl_policy_file_path: row.gl_policy_file_path,
     coi_file_path: row.coi_file_path,
+    contact_email_1: row.contact_email_1,
+    contact_email_2: row.contact_email_2,
     additional_insured: (row as any).additional_insured || 'unknown',
     certificate_holder: (row as any).certificate_holder || 'unknown',
     description_of_operations: (row as any).description_of_operations || '',
@@ -98,7 +102,7 @@ export function useProjectCOIs(projectId: string | undefined) {
         .from('subcontractor_cois')
         .select('*')
         .eq('project_id', projectId!)
-        .order('created_at', { ascending: true });
+        .order('subcontractor', { ascending: true });
       if (error) throw error;
       return (data || []).map(dbCoiToAppCoi);
     },
@@ -114,7 +118,7 @@ export function useAllCOIs() {
       const { data, error } = await supabase
         .from('subcontractor_cois')
         .select('*')
-        .order('created_at', { ascending: true });
+        .order('subcontractor', { ascending: true });
       if (error) throw error;
       return (data || []).map(row => ({ ...dbCoiToAppCoi(row), project_id: row.project_id }));
     },

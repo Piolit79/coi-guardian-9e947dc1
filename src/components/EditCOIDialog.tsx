@@ -62,6 +62,8 @@ export function EditCOIDialog({ coi, projectId, open, onClose }: Props) {
     umbrella_limit: coi.umbrellaPolicy?.limit || '',
     umbrella_effective_date: toInputDate(coi.umbrellaPolicy?.effectiveDate || ''),
     umbrella_expiration_date: toInputDate(coi.umbrellaPolicy?.expirationDate || ''),
+    contact_email_1: coi.contact_email_1 || '',
+    contact_email_2: coi.contact_email_2 || '',
   });
 
   const set = (field: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) =>
@@ -91,6 +93,8 @@ export function EditCOIDialog({ coi, projectId, open, onClose }: Props) {
           umbrella_limit: form.umbrella_limit || null,
           umbrella_effective_date: form.umbrella_effective_date || null,
           umbrella_expiration_date: form.umbrella_expiration_date || null,
+          contact_email_1: form.contact_email_1 || null,
+          contact_email_2: form.contact_email_2 || null,
         } as any)
         .eq('id', coi.id);
 
@@ -122,9 +126,21 @@ export function EditCOIDialog({ coi, projectId, open, onClose }: Props) {
           {/* Insured */}
           <section>
             <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Insured</h4>
-            <div>
-              <Label className="text-xs">Subcontractor / Company Name</Label>
-              <Input className="mt-1 h-8 text-sm" value={form.subcontractor} onChange={set('subcontractor')} />
+            <div className="space-y-3">
+              <div>
+                <Label className="text-xs">Subcontractor / Company Name</Label>
+                <Input className="mt-1 h-8 text-sm" value={form.subcontractor} onChange={set('subcontractor')} />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-xs">Contact Email 1</Label>
+                  <Input className="mt-1 h-8 text-sm" type="email" placeholder="contact@company.com" value={form.contact_email_1} onChange={set('contact_email_1')} />
+                </div>
+                <div>
+                  <Label className="text-xs">Contact Email 2</Label>
+                  <Input className="mt-1 h-8 text-sm" type="email" placeholder="contact@company.com" value={form.contact_email_2} onChange={set('contact_email_2')} />
+                </div>
+              </div>
             </div>
           </section>
 

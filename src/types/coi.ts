@@ -57,6 +57,8 @@ export interface COI {
   additional_insured?: string;
   certificate_holder?: string;
   description_of_operations?: string;
+  contact_email_1?: string | null;
+  contact_email_2?: string | null;
   is_active?: boolean;
 }
 
