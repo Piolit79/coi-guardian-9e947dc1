@@ -8,11 +8,11 @@ import {
   ChevronRight,
   Menu,
   X,
-  Shield,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useState, useEffect } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
+import slabLogo from '@/assets/slab-builders-logo.svg';
 
 const navItems = [
   { path: '/', icon: LayoutDashboard, label: 'Dashboard' },
@@ -21,55 +21,49 @@ const navItems = [
   { path: '/settings', icon: Settings, label: 'Settings' },
 ];
 
+function SidebarLogo({ compact = false }: { compact?: boolean }) {
+  if (compact) return null;
+  return (
+    <div className="flex flex-col items-start">
+      <img src={slabLogo} alt="SLAB Builders" className="h-7" />
+      <span className="text-[10px] text-sidebar-muted mt-0.5">COI Tracker</span>
+    </div>
+  );
+}
+
 export function AppSidebar() {
   const location = useLocation();
   const isMobile = useIsMobile();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  // Close mobile menu on route change
   useEffect(() => {
     setMobileOpen(false);
   }, [location.pathname]);
 
-  // Mobile: hamburger + overlay drawer
   if (isMobile) {
     return (
       <>
-        {/* Mobile top bar */}
         <div className="fixed top-0 left-0 right-0 z-50 flex h-14 items-center gap-3 border-b border-border bg-background px-4">
           <button onClick={() => setMobileOpen(true)} className="p-1.5 -ml-1.5">
             <Menu className="h-5 w-5 text-foreground" />
           </button>
-          <div className="flex items-center gap-2">
-            <div className="flex h-7 w-7 items-center justify-center rounded bg-primary/10">
-              <Shield className="h-4 w-4 text-primary" />
-            </div>
-            <span className="font-display text-sm font-semibold text-foreground">SLAB COI Tracker</span>
-          </div>
+          <img src={slabLogo} alt="SLAB Builders" className="h-5" />
         </div>
 
-        {/* Overlay */}
         {mobileOpen && (
           <div className="fixed inset-0 z-50 bg-black/40" onClick={() => setMobileOpen(false)}>
             <aside
               className="absolute left-0 top-0 h-full w-[260px] bg-sidebar border-r border-sidebar-border flex flex-col animate-in slide-in-from-left duration-200"
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Header */}
               <div className="flex h-14 items-center justify-between border-b border-sidebar-border px-4">
-                <div className="flex items-center gap-2">
-                  <div className="flex h-7 w-7 items-center justify-center rounded bg-primary/10">
-                    <Shield className="h-4 w-4 text-primary" />
-                  </div>
-                  <span className="font-display text-sm font-semibold text-foreground">SLAB COI Tracker</span>
-                </div>
+                <SidebarLogo />
                 <button onClick={() => setMobileOpen(false)} className="p-1">
                   <X className="h-5 w-5 text-muted-foreground" />
                 </button>
               </div>
 
-              {/* Nav */}
               <nav className="flex-1 space-y-1 px-3 py-4">
                 {navItems.map((item) => {
                   const isActive = location.pathname === item.path ||
@@ -98,7 +92,6 @@ export function AppSidebar() {
     );
   }
 
-  // Desktop: existing sidebar
   return (
     <aside
       className={cn(
@@ -106,15 +99,11 @@ export function AppSidebar() {
         collapsed ? "w-[68px]" : "w-[240px]"
       )}
     >
-      <div className="flex h-16 items-center gap-3 border-b border-sidebar-border px-4">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded bg-primary/10">
-          <Shield className="h-5 w-5 text-primary" />
-        </div>
-        {!collapsed && (
-          <div className="flex flex-col">
-            <span className="font-display text-base font-semibold text-foreground">SLAB COI Tracker</span>
-            <span className="text-[10px] text-sidebar-muted">Insurance Management</span>
-          </div>
+      <div className={cn("flex h-16 items-center border-b border-sidebar-border", collapsed ? "justify-center px-2" : "px-4")}>
+        {collapsed ? (
+          <span className="text-xs font-bold text-foreground">SB</span>
+        ) : (
+          <SidebarLogo />
         )}
       </div>
 
