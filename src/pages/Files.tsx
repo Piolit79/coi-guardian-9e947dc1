@@ -5,9 +5,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { downloadStorageFileBlob, createSignedFileUrl } from '@/lib/storageFile';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { FileText, Download, Loader2, FolderOpen, Shield } from 'lucide-react';
+import { FileText, Download, Loader2, FolderOpen, Shield, Mail } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
+import { useEmailReminders } from '@/hooks/useEmailReminders';
 
 interface StorageFile {
   path: string;
@@ -105,6 +106,7 @@ export default function Files() {
     },
   });
 
+  const { reminders } = useEmailReminders();
   const [downloadingPath, setDownloadingPath] = useState<string | null>(null);
 
   const handleDownload = async (filePath: string, insurer: string, label: string) => {
@@ -259,6 +261,35 @@ export default function Files() {
                           : <Download className="h-3 w-3" />}
                         Download
                       </Button>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Email Reminders Sent */}
+            {reminders.length > 0 && (
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <Mail className="h-4 w-4 text-primary" />
+                  <h2 className="text-sm font-semibold text-foreground">Email Reminders Sent</h2>
+                  <span className="text-xs text-muted-foreground">({reminders.length})</span>
+                </div>
+                <div className="space-y-1.5">
+                  {reminders.map(reminder => (
+                    <Card
+                      key={reminder.id}
+                      className="flex items-center gap-3 border border-border px-4 py-3"
+                    >
+                      <Mail className="h-4 w-4 text-muted-foreground shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-foreground truncate">{reminder.subcontractor}</p>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {reminder.projectName && <span className="text-primary">{reminder.projectName} · </span>}
+                          To: {reminder.emailTo} · {format(new Date(reminder.sentAt), 'MMM d, yyyy h:mm a')}
+                        </p>
+                        <p className="text-xs text-muted-foreground truncate">{reminder.policies.join(', ')}</p>
+                      </div>
                     </Card>
                   ))}
                 </div>

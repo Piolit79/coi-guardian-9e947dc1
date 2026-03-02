@@ -1,6 +1,8 @@
 import { ReactNode, useState, useEffect } from 'react';
-import { CheckCircle2, XCircle, AlertTriangle, Loader2, ExternalLink, Mail, Pencil, X } from 'lucide-react';
+import { CheckCircle2, XCircle, AlertTriangle, Loader2, ExternalLink, Mail, Pencil, Send } from 'lucide-react';
 import { useContactEmails } from '@/hooks/useContactEmails';
+import { useEmailReminders } from '@/hooks/useEmailReminders';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { StatusBadge } from '@/components/StatusBadge';
@@ -55,8 +57,63 @@ function FileViewButton({ filePath, label }: { filePath: string; label: string }
 interface COIDetailContentProps {
   coi: COI & { project_id?: string };
   projectId: string;
+  projectName?: string;
   settings: GCSettings | undefined;
   footer?: ReactNode;
+}
+
+function SendReminderButton({ coi, projectId, projectName }: { coi: COI; projectId: string; projectName?: string }) {
+  const { emails } = useContactEmails(coi.id);
+  const { addReminder } = useEmailReminders();
+
+  const glNeedsAttention = coi.status === 'expired' || coi.status === 'expiring';
+  const wcNeedsAttention = coi.wcPolicy && (coi.wcPolicy.status === 'expired' || coi.wcPolicy.status === 'expiring');
+
+  if (!glNeedsAttention && !wcNeedsAttention) return null;
+  if (!emails.email1) return null;
+
+  const policies: string[] = [];
+  if (glNeedsAttention) policies.push('General Liability COI');
+  if (wcNeedsAttention) policies.push("Workers' Compensation Certificate");
+
+  const policyLine = policies.join(' and your ');
+  const subject = `COI Reminder – ${coi.subcontractor}${projectName ? ` – ${projectName}` : ''}`;
+
+  const body = [
+    `Dear ${coi.subcontractor},`,
+    '',
+    `Your ${policyLine} is expired. Please email an updated certificate for this project at your earliest convenience.`,
+    '',
+    'Thank you,',
+    'SLAB Builders',
+  ].join('\n');
+
+  const toAddresses = [emails.email1, emails.email2].filter(Boolean).join(',');
+  const mailtoHref = `mailto:${toAddresses}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+
+  const handleClick = () => {
+    window.location.href = mailtoHref;
+    addReminder({
+      coiId: coi.id,
+      subcontractor: coi.subcontractor,
+      projectId,
+      projectName: projectName || '',
+      emailTo: toAddresses,
+      subject,
+      policies,
+    });
+    toast.success('Reminder logged', { description: `Email opened for ${coi.subcontractor}` });
+  };
+
+  return (
+    <button
+      onClick={handleClick}
+      className="flex items-center gap-1.5 text-xs text-status-warning hover:text-status-warning/80 font-medium transition-colors"
+    >
+      <Send className="h-3.5 w-3.5" />
+      Send reminder email
+    </button>
+  );
 }
 
 function COIContactEmails({ coiId }: { coiId: string }) {
@@ -152,7 +209,7 @@ export function COIDetailHeader({ coi }: { coi: COI }) {
   );
 }
 
-export function COIDetailContent({ coi, projectId, settings, footer }: COIDetailContentProps) {
+export function COIDetailContent({ coi, projectId, projectName, settings, footer }: COIDetailContentProps) {
   return (
     <>
       <div className="space-y-4 mt-2">
@@ -170,6 +227,9 @@ export function COIDetailContent({ coi, projectId, settings, footer }: COIDetail
 
         {/* Contact Emails (stored in localStorage) */}
         <COIContactEmails coiId={coi.id} />
+
+        {/* Send Reminder Email */}
+        <SendReminderButton coi={coi} projectId={projectId} projectName={projectName} />
 
         {/* GL Details */}
         {coi.glPolicy && (

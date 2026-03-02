@@ -553,6 +553,7 @@ const Index = () => {
                 <COIDetailContent
                   coi={selectedCOI}
                   projectId={selectedCOI.project_id || ''}
+                  projectName={projectMap.get(selectedCOI.project_id || '') || ''}
                   settings={settings}
                 />
               </>}

@@ -135,6 +135,7 @@ export default function ProjectDetail() {
                 <COIDetailContent
                   coi={selectedCOI}
                   projectId={project.id}
+                  projectName={project.name}
                   settings={settings}
                   footer={
                     <div className="pt-2 border-t border-border flex items-center gap-2">
