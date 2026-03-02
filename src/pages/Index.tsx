@@ -204,7 +204,7 @@ const Index = () => {
     <AppLayout>
       <div className="p-6 lg:p-8 max-w-7xl">
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-foreground">COI Dashboard</h1>
+          <h1 className="text-2xl font-bold" style={{ color: '#7b7c81' }}>COI Dashboard</h1>
           <p className="text-sm text-muted-foreground mt-1">
 
 
