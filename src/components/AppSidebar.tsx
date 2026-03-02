@@ -3,75 +3,149 @@ import {
   LayoutDashboard,
   FolderKanban,
   FolderOpen,
-  Shield,
   Settings,
   ChevronLeft,
-  ChevronRight } from
-'lucide-react';
+  ChevronRight,
+  Menu,
+  X,
+  Shield,
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const navItems = [
-{ path: '/', icon: LayoutDashboard, label: 'Dashboard' },
-{ path: '/projects', icon: FolderKanban, label: 'Projects' },
-{ path: '/files', icon: FolderOpen, label: 'Files' },
-{ path: '/settings', icon: Settings, label: 'Settings' }];
-
+  { path: '/', icon: LayoutDashboard, label: 'Dashboard' },
+  { path: '/projects', icon: FolderKanban, label: 'Projects' },
+  { path: '/files', icon: FolderOpen, label: 'Files' },
+  { path: '/settings', icon: Settings, label: 'Settings' },
+];
 
 export function AppSidebar() {
   const location = useLocation();
+  const isMobile = useIsMobile();
   const [collapsed, setCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
+  // Close mobile menu on route change
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [location.pathname]);
+
+  // Mobile: hamburger + overlay drawer
+  if (isMobile) {
+    return (
+      <>
+        {/* Mobile top bar */}
+        <div className="fixed top-0 left-0 right-0 z-50 flex h-14 items-center gap-3 border-b border-border bg-background px-4">
+          <button onClick={() => setMobileOpen(true)} className="p-1.5 -ml-1.5">
+            <Menu className="h-5 w-5 text-foreground" />
+          </button>
+          <div className="flex items-center gap-2">
+            <div className="flex h-7 w-7 items-center justify-center rounded bg-primary/10">
+              <Shield className="h-4 w-4 text-primary" />
+            </div>
+            <span className="font-display text-sm font-semibold text-foreground">SLAB COI Tracker</span>
+          </div>
+        </div>
+
+        {/* Overlay */}
+        {mobileOpen && (
+          <div className="fixed inset-0 z-50 bg-black/40" onClick={() => setMobileOpen(false)}>
+            <aside
+              className="absolute left-0 top-0 h-full w-[260px] bg-sidebar border-r border-sidebar-border flex flex-col animate-in slide-in-from-left duration-200"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="flex h-14 items-center justify-between border-b border-sidebar-border px-4">
+                <div className="flex items-center gap-2">
+                  <div className="flex h-7 w-7 items-center justify-center rounded bg-primary/10">
+                    <Shield className="h-4 w-4 text-primary" />
+                  </div>
+                  <span className="font-display text-sm font-semibold text-foreground">SLAB COI Tracker</span>
+                </div>
+                <button onClick={() => setMobileOpen(false)} className="p-1">
+                  <X className="h-5 w-5 text-muted-foreground" />
+                </button>
+              </div>
+
+              {/* Nav */}
+              <nav className="flex-1 space-y-1 px-3 py-4">
+                {navItems.map((item) => {
+                  const isActive = location.pathname === item.path ||
+                    (item.path !== '/' && location.pathname.startsWith(item.path));
+                  return (
+                    <Link
+                      key={item.path}
+                      to={item.path}
+                      className={cn(
+                        "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                        isActive
+                          ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                          : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
+                      )}
+                    >
+                      <item.icon className="h-[18px] w-[18px] shrink-0" />
+                      <span>{item.label}</span>
+                    </Link>
+                  );
+                })}
+              </nav>
+            </aside>
+          </div>
+        )}
+      </>
+    );
+  }
+
+  // Desktop: existing sidebar
   return (
     <aside
       className={cn(
         "fixed left-0 top-0 z-40 flex h-screen flex-col border-r border-sidebar-border bg-sidebar transition-all duration-300",
         collapsed ? "w-[68px]" : "w-[240px]"
-      )}>
-
-      {/* Logo */}
+      )}
+    >
       <div className="flex h-16 items-center gap-3 border-b border-sidebar-border px-4">
         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded bg-primary/10">
           <Shield className="h-5 w-5 text-primary" />
         </div>
-        {!collapsed &&
-        <div className="flex flex-col">
+        {!collapsed && (
+          <div className="flex flex-col">
             <span className="font-display text-base font-semibold text-foreground">SLAB COI Tracker</span>
             <span className="text-[10px] text-sidebar-muted">Insurance Management</span>
           </div>
-        }
+        )}
       </div>
 
-      {/* Nav */}
       <nav className="flex-1 space-y-1 px-3 py-4">
         {navItems.map((item) => {
           const isActive = location.pathname === item.path ||
-          item.path !== '/' && location.pathname.startsWith(item.path);
+            (item.path !== '/' && location.pathname.startsWith(item.path));
           return (
             <Link
               key={item.path}
               to={item.path}
               className={cn(
                 "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
-                isActive ?
-                "bg-sidebar-accent text-sidebar-accent-foreground" :
-                "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
-              )}>
-
+                isActive
+                  ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                  : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
+              )}
+            >
               <item.icon className="h-[18px] w-[18px] shrink-0" />
               {!collapsed && <span>{item.label}</span>}
-            </Link>);
-
+            </Link>
+          );
         })}
       </nav>
 
-      {/* Collapse toggle */}
       <button
         onClick={() => setCollapsed(!collapsed)}
-        className="flex h-12 items-center justify-center border-t border-sidebar-border text-sidebar-muted hover:text-sidebar-foreground transition-colors">
-
+        className="flex h-12 items-center justify-center border-t border-sidebar-border text-sidebar-muted hover:text-sidebar-foreground transition-colors"
+      >
         {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
       </button>
-    </aside>);
-
+    </aside>
+  );
 }
