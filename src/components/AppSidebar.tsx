@@ -26,7 +26,6 @@ function SidebarLogo({ compact = false }: { compact?: boolean }) {
   return (
     <div className="flex flex-col items-start pt-4 w-full">
       <img src={slabLogo} alt="SLAB Builders" className="w-full max-w-[200px]" />
-      <span className="text-[19px] font-light uppercase mt-0.5 pl-[7px]" style={{ color: '#7b7c81', letterSpacing: '0.22em' }}>COI Tracker</span>
     </div>
   );
 }
@@ -109,6 +108,7 @@ export function AppSidebar() {
       </div>
 
       <nav className="flex-1 space-y-1 px-3 py-4">
+        <span className="block text-[10px] font-semibold uppercase tracking-widest text-muted-foreground px-3 pb-2">COI Tracker</span>
         {navItems.map((item) => {
           const isActive = location.pathname === item.path ||
             (item.path !== '/' && location.pathname.startsWith(item.path));
