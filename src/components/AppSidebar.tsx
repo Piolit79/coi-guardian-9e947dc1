@@ -47,10 +47,8 @@ export function AppSidebar() {
           <button onClick={() => setMobileOpen(true)} className="p-1.5 -ml-1.5">
             <Menu className="h-5 w-5 text-foreground" />
           </button>
-          <div className="flex flex-col">
-            <img src={slabLogo} alt="SLAB Builders" className="h-7" />
-            <span className="text-[9px] font-light tracking-[0.02em] uppercase leading-none mt-0.5" style={{ color: '#7b7c81' }}>COI Tracker</span>
-          </div>
+          <img src={slabLogo} alt="SLAB Builders" className="h-7" />
+          <span className="text-[11px] font-medium tracking-[0.08em] uppercase" style={{ color: '#7b7c81' }}>COI Tracker</span>
         </div>
 
         {mobileOpen && (
