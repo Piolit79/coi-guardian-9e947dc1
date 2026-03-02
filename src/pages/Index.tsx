@@ -471,6 +471,7 @@ const Index = () => {
           </div>
         </div>
 
+        <h2 className="text-lg font-semibold text-foreground mb-3">Projects</h2>
         {(projects || []).length === 0 ? <Card className="border border-dashed border-border p-8 text-center">
             <p className="text-sm text-muted-foreground">No projects yet. Go to Projects to create one.</p>
           </Card> : <div className="space-y-3">
