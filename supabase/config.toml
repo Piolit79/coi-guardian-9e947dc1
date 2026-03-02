@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.review-policy]
 verify_jwt = false
+
+[functions.coi-reminders]
+verify_jwt = false
