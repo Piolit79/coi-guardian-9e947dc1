@@ -8,6 +8,8 @@ import { StatusBadge } from '@/components/StatusBadge';
 import { ComplianceBadge } from '@/components/ComplianceBadge';
 import { PolicyUploadButton } from '@/components/PolicyUploadButton';
 import { PolicyReviewDialog } from '@/components/PolicyReviewDialog';
+import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 import {
   ChevronDown,
@@ -170,11 +172,16 @@ const Index = () => {
 
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
+  const validCois = dashboardCois.filter((c) => c.status === 'valid');
+  const expiringCois = dashboardCois.filter((c) => c.status === 'expiring');
+  const expiredCois = dashboardCois.filter((c) => c.status === 'expired');
+  const activeProjectsList = (projects || []).filter((p) => p.status === 'active');
+
   const stats = [
-  { label: 'Active Projects', value: activeProjects, icon: FolderKanban, color: 'text-primary', bg: 'bg-primary/10' },
-  { label: 'Valid COIs', value: validCount, icon: CheckCircle2, color: 'text-status-valid', bg: 'bg-status-valid-bg' },
-  { label: 'Expiring Soon', value: expiringCount, icon: AlertTriangle, color: 'text-status-warning', bg: 'bg-status-warning-bg' },
-  { label: 'Expired', value: expiredCount, icon: XCircle, color: 'text-status-expired', bg: 'bg-status-expired-bg' }];
+  { label: 'Active Projects', value: activeProjects, icon: FolderKanban, color: 'text-primary', bg: 'bg-primary/10', items: activeProjectsList.map((p) => p.name) },
+  { label: 'Valid COIs', value: validCount, icon: CheckCircle2, color: 'text-status-valid', bg: 'bg-status-valid-bg', items: validCois.map((c) => `${c.subcontractor} — ${projectMap.get(c.project_id) || ''}`) },
+  { label: 'Expiring Soon', value: expiringCount, icon: AlertTriangle, color: 'text-status-warning', bg: 'bg-status-warning-bg', items: expiringCois.map((c) => `${c.subcontractor} — ${projectMap.get(c.project_id) || ''} (${c.expirationDate})`) },
+  { label: 'Expired', value: expiredCount, icon: XCircle, color: 'text-status-expired', bg: 'bg-status-expired-bg', items: expiredCois.map((c) => `${c.subcontractor} — ${projectMap.get(c.project_id) || ''} (${c.expirationDate})`) }];
 
 
   // Group all COIs by project (no dedup — matches what the Projects page shows)
@@ -388,15 +395,37 @@ const Index = () => {
         </div>
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          {stats.map((stat) => <Card key={stat.label} className="flex items-center gap-4 border border-border p-4">
-              <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${stat.bg}`}>
-                <stat.icon className={`h-5 w-5 ${stat.color}`} />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-foreground">{stat.value}</p>
-                <p className="text-xs text-muted-foreground">{stat.label}</p>
-              </div>
-            </Card>)}
+          {stats.map((stat) => (
+            <HoverCard key={stat.label} openDelay={200} closeDelay={100}>
+              <HoverCardTrigger asChild>
+                <Card className="flex items-center gap-4 border border-border p-4 cursor-default hover:shadow-md transition-shadow">
+                  <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${stat.bg}`}>
+                    <stat.icon className={`h-5 w-5 ${stat.color}`} />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-foreground">{stat.value}</p>
+                    <p className="text-xs text-muted-foreground">{stat.label}</p>
+                  </div>
+                </Card>
+              </HoverCardTrigger>
+              <HoverCardContent className="w-72 p-0" align="start">
+                <div className="px-3 py-2 border-b border-border">
+                  <p className="text-xs font-semibold text-foreground">{stat.label} ({stat.value})</p>
+                </div>
+                {stat.items.length === 0 ? (
+                  <p className="text-xs text-muted-foreground px-3 py-3">None</p>
+                ) : (
+                  <ScrollArea className="max-h-48">
+                    <div className="px-3 py-2 space-y-1.5">
+                      {stat.items.map((item, i) => (
+                        <p key={i} className="text-xs text-muted-foreground truncate">{item}</p>
+                      ))}
+                    </div>
+                  </ScrollArea>
+                )}
+              </HoverCardContent>
+            </HoverCard>
+          ))}
         </div>
 
         {/* Alerts & Calendar Section */}
