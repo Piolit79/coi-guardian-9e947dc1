@@ -1,4 +1,4 @@
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
   FolderKanban,
@@ -7,8 +7,10 @@ import {
   ChevronLeft,
   ChevronRight,
   Menu,
-  X } from
+  X,
+  LogOut } from
 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
 import { cn } from '@/lib/utils';
 import { useState, useEffect } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -33,9 +35,16 @@ function SidebarLogo({ compact = false }: {compact?: boolean;}) {
 
 export function AppSidebar() {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { logout } = useAuth();
   const isMobile = useIsMobile();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login', { replace: true });
+  };
 
   useEffect(() => {
     setMobileOpen(false);
@@ -85,6 +94,14 @@ export function AppSidebar() {
 
               })}
               </nav>
+              <div className="border-t border-sidebar-border px-3 py-3">
+                <button
+                  onClick={handleLogout}
+                  className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground transition-colors">
+                  <LogOut className="h-[18px] w-[18px] shrink-0" />
+                  <span>Log out</span>
+                </button>
+              </div>
             </aside>
           </div>
         }
@@ -129,6 +146,18 @@ export function AppSidebar() {
 
         })}
       </nav>
+
+      <div className="border-t border-sidebar-border px-3 py-3">
+        <button
+          onClick={handleLogout}
+          className={cn(
+            "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground transition-colors",
+            collapsed && "justify-center px-0"
+          )}>
+          <LogOut className="h-[18px] w-[18px] shrink-0" />
+          {!collapsed && <span>Log out</span>}
+        </button>
+      </div>
 
       <button
         onClick={() => setCollapsed(!collapsed)}
