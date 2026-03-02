@@ -1,6 +1,8 @@
 import { ReactNode, useState, useEffect } from 'react';
-import { CheckCircle2, XCircle, AlertTriangle, Loader2, ExternalLink, Mail } from 'lucide-react';
+import { CheckCircle2, XCircle, AlertTriangle, Loader2, ExternalLink, Mail, Pencil, X } from 'lucide-react';
+import { useContactEmails } from '@/hooks/useContactEmails';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { StatusBadge } from '@/components/StatusBadge';
 import { ComplianceBadge } from '@/components/ComplianceBadge';
 import { PolicyUploadButton } from '@/components/PolicyUploadButton';
@@ -57,6 +59,89 @@ interface COIDetailContentProps {
   footer?: ReactNode;
 }
 
+function COIContactEmails({ coiId }: { coiId: string }) {
+  const { emails, setEmails } = useContactEmails(coiId);
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState({ email1: '', email2: '' });
+
+  const hasEmails = emails.email1 || emails.email2;
+
+  const openEdit = () => {
+    setDraft({ email1: emails.email1, email2: emails.email2 });
+    setEditing(true);
+  };
+
+  const save = () => {
+    setEmails(draft.email1.trim(), draft.email2.trim());
+    setEditing(false);
+  };
+
+  if (!editing && !hasEmails) {
+    return (
+      <button
+        onClick={openEdit}
+        className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+      >
+        <Mail className="h-3.5 w-3.5" />
+        Add contact email
+      </button>
+    );
+  }
+
+  if (editing) {
+    return (
+      <div className="rounded-lg border border-border p-4">
+        <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Contact Emails</h4>
+        <div className="space-y-2">
+          <Input
+            type="email"
+            placeholder="Contact email 1"
+            value={draft.email1}
+            onChange={e => setDraft(p => ({ ...p, email1: e.target.value }))}
+            className="h-8 text-sm"
+          />
+          <Input
+            type="email"
+            placeholder="Contact email 2 (optional)"
+            value={draft.email2}
+            onChange={e => setDraft(p => ({ ...p, email2: e.target.value }))}
+            className="h-8 text-sm"
+          />
+        </div>
+        <div className="flex gap-2 mt-3">
+          <Button size="sm" className="h-7 text-xs" onClick={save}>Save</Button>
+          <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setEditing(false)}>Cancel</Button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-lg border border-border p-4">
+      <div className="flex items-center justify-between mb-3">
+        <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Contact</h4>
+        <button onClick={openEdit} className="text-muted-foreground hover:text-foreground transition-colors">
+          <Pencil className="h-3 w-3" />
+        </button>
+      </div>
+      <div className="space-y-2">
+        {emails.email1 && (
+          <a href={`mailto:${emails.email1}`} className="flex items-center gap-2 text-xs text-foreground hover:text-primary transition-colors">
+            <Mail className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+            {emails.email1}
+          </a>
+        )}
+        {emails.email2 && (
+          <a href={`mailto:${emails.email2}`} className="flex items-center gap-2 text-xs text-foreground hover:text-primary transition-colors">
+            <Mail className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+            {emails.email2}
+          </a>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export function COIDetailHeader({ coi }: { coi: COI }) {
   return (
     <div className="flex items-center gap-2 flex-wrap">
@@ -83,26 +168,8 @@ export function COIDetailContent({ coi, projectId, settings, footer }: COIDetail
           </div>
         </div>
 
-        {/* Contact Emails */}
-        {(coi.contact_email_1 || coi.contact_email_2) && (
-          <div className="rounded-lg border border-border p-4">
-            <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Contact</h4>
-            <div className="space-y-2">
-              {coi.contact_email_1 && (
-                <a href={`mailto:${coi.contact_email_1}`} className="flex items-center gap-2 text-xs text-foreground hover:text-primary transition-colors">
-                  <Mail className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                  {coi.contact_email_1}
-                </a>
-              )}
-              {coi.contact_email_2 && (
-                <a href={`mailto:${coi.contact_email_2}`} className="flex items-center gap-2 text-xs text-foreground hover:text-primary transition-colors">
-                  <Mail className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                  {coi.contact_email_2}
-                </a>
-              )}
-            </div>
-          </div>
-        )}
+        {/* Contact Emails (stored in localStorage) */}
+        <COIContactEmails coiId={coi.id} />
 
         {/* GL Details */}
         {coi.glPolicy && (
