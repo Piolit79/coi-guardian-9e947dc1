@@ -408,17 +408,17 @@ const Index = () => {
                   </div>
                 </Card>
               </HoverCardTrigger>
-              <HoverCardContent className="w-72 p-0" align="start">
+              <HoverCardContent className="w-80 p-0" align="start">
                 <div className="px-3 py-2 border-b border-border">
                   <p className="text-xs font-semibold text-foreground">{stat.label} ({stat.value})</p>
                 </div>
                 {stat.items.length === 0 ? (
                   <p className="text-xs text-muted-foreground px-3 py-3">None</p>
                 ) : (
-                  <ScrollArea className="max-h-48">
+                  <ScrollArea className={stat.items.length > 12 ? "max-h-72" : ""}>
                     <div className="px-3 py-2 space-y-1.5">
                       {stat.items.map((item, i) => (
-                        <p key={i} className="text-xs text-muted-foreground truncate">{item}</p>
+                        <p key={i} className="text-xs text-muted-foreground">{item}</p>
                       ))}
                     </div>
                   </ScrollArea>
