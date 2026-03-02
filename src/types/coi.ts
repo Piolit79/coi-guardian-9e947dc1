@@ -57,6 +57,7 @@ export interface COI {
   additional_insured?: string;
   certificate_holder?: string;
   description_of_operations?: string;
+  is_active?: boolean;
 }
 
 export interface Project {

@@ -108,7 +108,8 @@ const Index = () => {
     const latestBySubcontractor = new Map<string, COI & { project_id: string }>();
 
     // useAllCOIs is already ordered by created_at desc, so first seen = latest record
-    (allCois || []).forEach((coi) => {
+    // Only include active COIs
+    (allCois || []).filter(c => c.is_active !== false).forEach((coi) => {
       const subcontractorKey = (coi.subcontractor || '')
         .trim()
         .toLowerCase()
@@ -178,7 +179,7 @@ const Index = () => {
   ];
 
   // Group all COIs by project (no dedup — matches what the Projects page shows)
-  const coisByProject = (allCois || []).reduce<Record<string, (COI & { project_id: string })[]>>((acc, coi) => {
+  const coisByProject = (allCois || []).filter(c => c.is_active !== false).reduce<Record<string, (COI & { project_id: string })[]>>((acc, coi) => {
     (acc[coi.project_id] = acc[coi.project_id] || []).push(coi);
     return acc;
   }, {});

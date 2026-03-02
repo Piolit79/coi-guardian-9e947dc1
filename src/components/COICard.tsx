@@ -2,29 +2,54 @@ import { COI } from '@/types/coi';
 import { StatusBadge } from './StatusBadge';
 import { ComplianceBadge } from './ComplianceBadge';
 import { Card } from '@/components/ui/card';
+import { Switch } from '@/components/ui/switch';
 import { Building2, Calendar, FileText, ChevronRight } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface COICardProps {
   coi: COI;
   onClick?: (coi: COI) => void;
+  onToggleActive?: (coi: COI, isActive: boolean) => void;
 }
 
-export function COICard({ coi, onClick }: COICardProps) {
+export function COICard({ coi, onClick, onToggleActive }: COICardProps) {
+  const isActive = coi.is_active !== false;
+
   return (
     <Card
-      className="group cursor-pointer border border-border p-4 transition-all hover:shadow-md hover:border-primary/20"
+      className={cn(
+        'group cursor-pointer border border-border p-4 transition-all hover:shadow-md hover:border-primary/20',
+        !isActive && 'opacity-50 bg-muted/30'
+      )}
       onClick={() => onClick?.(coi)}
     >
       <div className="flex items-start justify-between">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <h4 className="text-sm font-semibold text-foreground truncate">{coi.subcontractor}</h4>
-            <StatusBadge status={coi.status} daysUntilExpiry={coi.daysUntilExpiry} />
-            <ComplianceBadge coi={coi} />
+            <h4 className={cn('text-sm font-semibold truncate', isActive ? 'text-foreground' : 'text-muted-foreground line-through')}>
+              {coi.subcontractor}
+            </h4>
+            {isActive && <StatusBadge status={coi.status} daysUntilExpiry={coi.daysUntilExpiry} />}
+            {isActive && <ComplianceBadge coi={coi} />}
+            {!isActive && (
+              <span className="text-[10px] font-medium text-muted-foreground bg-muted px-1.5 py-0.5 rounded">Inactive</span>
+            )}
           </div>
           <p className="text-xs text-muted-foreground">{coi.carrier}</p>
         </div>
-        <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0 mt-1" />
+        <div className="flex items-center gap-2 shrink-0 ml-2">
+          {onToggleActive && (
+            <Switch
+              checked={isActive}
+              onCheckedChange={(checked) => {
+                onToggleActive(coi, checked);
+              }}
+              onClick={(e) => e.stopPropagation()}
+              className="scale-75"
+            />
+          )}
+          <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity mt-0.5" />
+        </div>
       </div>
 
       <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5 text-xs text-muted-foreground">
