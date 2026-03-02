@@ -108,7 +108,7 @@ export function AppSidebar() {
       </div>
 
       <nav className="flex-1 space-y-1 px-3 py-4">
-        <span className="block text-sm font-semibold uppercase tracking-widest text-muted-foreground px-3 pb-2">COI Tracker</span>
+        <span className="block text-base font-semibold uppercase tracking-widest text-muted-foreground px-3 pb-2">COI Tracker</span>
         {navItems.map((item) => {
           const isActive = location.pathname === item.path ||
             (item.path !== '/' && location.pathname.startsWith(item.path));
