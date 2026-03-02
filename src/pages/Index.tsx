@@ -198,193 +198,193 @@ const Index = () => {
       <div className="p-6 lg:p-8 max-w-7xl">
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
-          <p className="text-sm text-muted-foreground mt-1">Certificate of Insurance Overview
+          <p className="text-sm text-muted-foreground mt-1">
 
-3
 
-Active Projects
 
-4
 
-Valid COIs
 
-2
 
-Expiring Soon
 
-11
 
-Expired
 
-Expiration Alerts
-13
 
-JAMES J RIVERA
 
-Expired
 
-ASD 2
 
-Expired 04/07/2025
 
-JAMES J RIVERA
 
-Expired
 
-ASD Backyard
 
-Expired 04/07/2025
 
-FRANCISCO ANTONIO ARIAS MIGUEL
 
-Expired
 
-ASD 2
 
-Expired 09/01/2025
 
-M&B STRONG CONCRETE CORPORATION
 
-Expired
 
-ASD 2
 
-Expired 10/12/2025
 
-FAL-KEN HEATING & COOLING CORP
 
-Expired
 
-ASD Backyard
 
-Expired 11/01/2025
 
-MS DRYWALL INC
 
-Expired
 
-ASD 2
 
-Expired 11/13/2025
 
-THAYER CONSTRUCTION INC
 
-Expired
 
-ASD 2
 
-Expired 12/16/2025
 
-THAYER CONSTRUCTION INC
 
-Expired
 
-Newtown
 
-Expired 12/16/2025
 
-THAYER CONSTRUCTION INC
 
-Expired
 
-ASD Backyard
 
-Expired 12/16/2025
 
-GROUND ELECTRIC SYSTEMS CORP.
 
-Expired
 
-ASD 2
 
-Expired 02/20/2026
 
-GROUND ELECTRIC SYSTEMS CORP.
 
-Expired
 
-ASD Backyard
 
-Expired 02/20/2026
 
-OLDFIELD INSTALLATION LLC
 
-Expiring Soon
-(16d)
 
-ASD 2
 
-Expires 03/19/2026
 
-OLDFIELD INSTALLATION LLC
 
-Expiring Soon
-(16d)
 
-ASD Backyard
 
-Expires 03/19/2026
 
-Expiration Calendar
-2026
-Jan
-Feb
-2 COIs
-Mar
-2 COIs
-Apr
-1 COI
-May
-Jun
-Jul
-1 COI
-Aug
-1 COI
-Sep
-Oct
-Nov
-Dec
-1 COI
-ASD 2
-ACTIVE
 
-8
 
-COIS
 
-1
 
-EXPIRING
 
-6
 
-EXPIRED
 
-Newtown
-ACTIVE
 
-2
 
-COIS
 
-1
 
-EXPIRED
 
-ASD Backyard
-ACTIVE
 
-7
 
-COIS
 
-1
 
-EXPIRING
 
-4
 
-EXPIRED</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+          </p>
         </div>
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
