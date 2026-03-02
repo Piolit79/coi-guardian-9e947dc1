@@ -24,9 +24,9 @@ const navItems = [
 function SidebarLogo({ compact = false }: { compact?: boolean }) {
   if (compact) return null;
   return (
-    <div className="flex flex-col items-center pt-4 w-full">
+    <div className="flex flex-col items-start pt-4 w-full">
       <img src={slabLogo} alt="SLAB Builders" className="w-full max-w-[200px]" />
-      <span className="text-[17px] font-light tracking-[0.25em] uppercase mt-0.5 w-full text-left" style={{ color: '#7b7c81' }}>COI Tracker</span>
+      <span className="text-[17px] font-light tracking-[0.25em] uppercase mt-0.5 pl-[7px]" style={{ color: '#7b7c81' }}>COI Tracker</span>
     </div>
   );
 }
