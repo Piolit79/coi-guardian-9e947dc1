@@ -26,7 +26,8 @@ function SidebarLogo({ compact = false }: {compact?: boolean;}) {
   return (
     <div className="flex flex-col items-start pt-4 w-full">
       <img src={slabLogo} alt="SLAB Builders" className="w-full max-w-[200px]" />
-    </div>);
+    </div>
+  );
 
 }
 
@@ -57,8 +58,7 @@ export function AppSidebar() {
             className="absolute left-0 top-0 h-full w-[260px] bg-sidebar border-r border-sidebar-border flex flex-col animate-in slide-in-from-left duration-200"
             onClick={(e) => e.stopPropagation()}>
 
-              <div className="flex h-14 items-center justify-between border-b border-sidebar-border px-4">
-                <SidebarLogo />
+              <div className="flex h-14 items-center justify-end border-b border-sidebar-border px-4">
                 <button onClick={() => setMobileOpen(false)} className="p-1">
                   <X className="h-5 w-5 text-muted-foreground" />
                 </button>
