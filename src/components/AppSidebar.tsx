@@ -26,7 +26,7 @@ function SidebarLogo({ compact = false }: { compact?: boolean }) {
   return (
     <div className="flex flex-col items-center pt-6 w-full">
       <img src={slabLogo} alt="SLAB Builders" className="w-full max-w-[200px]" />
-      <span className="text-[13px] font-semibold tracking-[0.15em] uppercase mt-0.5" style={{ color: '#7b7c81' }}>COI Tracker</span>
+      <span className="text-[17px] font-semibold tracking-[0.25em] uppercase mt-0.5 w-full text-center" style={{ color: '#7b7c81' }}>COI Tracker</span>
     </div>
   );
 }
