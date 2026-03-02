@@ -25,8 +25,8 @@ function SidebarLogo({ compact = false }: { compact?: boolean }) {
   if (compact) return null;
   return (
     <div className="flex flex-col items-start">
-      <img src={slabLogo} alt="SLAB Builders" className="h-7" />
-      <span className="text-[10px] text-sidebar-muted mt-0.5">COI Tracker</span>
+      <img src={slabLogo} alt="SLAB Builders" className="w-full max-w-[200px]" />
+      <span className="text-xs font-medium text-sidebar-muted mt-1">COI Tracker</span>
     </div>
   );
 }
