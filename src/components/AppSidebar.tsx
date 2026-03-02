@@ -49,6 +49,7 @@ export function AppSidebar() {
             <Menu className="h-5 w-5 text-foreground" />
           </button>
           <img src={slabLogo} alt="SLAB Builders" className="h-5" />
+          <span className="text-xs font-light tracking-[0.15em] uppercase" style={{ color: '#7b7c81' }}>COI Tracker</span>
         </div>
 
         {mobileOpen && (
