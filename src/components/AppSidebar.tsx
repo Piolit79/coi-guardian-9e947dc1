@@ -99,7 +99,7 @@ export function AppSidebar() {
         collapsed ? "w-[68px]" : "w-[240px]"
       )}
     >
-      <div className={cn("flex h-16 items-center border-b border-sidebar-border", collapsed ? "justify-center px-2" : "px-4")}>
+      <div className={cn("flex items-center border-b border-sidebar-border", collapsed ? "h-16 justify-center px-2" : "px-4 py-5")}>
         {collapsed ? (
           <span className="text-xs font-bold text-foreground">SB</span>
         ) : (
