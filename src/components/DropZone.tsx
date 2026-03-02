@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { Upload, FileText, Loader2, CheckCircle } from 'lucide-react';
+import { Upload, FileText, Loader2, CheckCircle, Folder } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
@@ -7,6 +7,32 @@ import { useQueryClient } from '@tanstack/react-query';
 interface DropZoneProps {
   projectId: string;
   className?: string;
+}
+
+const ACCEPTED_EXTENSIONS = /\.(pdf|jpg|jpeg|png)$/i;
+
+async function getAllFilesFromEntry(entry: FileSystemEntry): Promise<File[]> {
+  if (entry.isFile) {
+    return new Promise<File[]>((resolve, reject) =>
+      (entry as FileSystemFileEntry).file(f => resolve([f]), reject)
+    );
+  }
+  if (entry.isDirectory) {
+    const reader = (entry as FileSystemDirectoryEntry).createReader();
+    const allEntries: FileSystemEntry[] = [];
+    await new Promise<void>((resolve, reject) => {
+      const readBatch = () =>
+        reader.readEntries(batch => {
+          if (batch.length === 0) { resolve(); return; }
+          allEntries.push(...batch);
+          readBatch();
+        }, reject);
+      readBatch();
+    });
+    const nested = await Promise.all(allEntries.map(getAllFilesFromEntry));
+    return nested.flat();
+  }
+  return [];
 }
 
 export function DropZone({ projectId, className }: DropZoneProps) {
@@ -83,12 +109,22 @@ export function DropZone({ projectId, className }: DropZoneProps) {
     setIsDragOver(false);
   }, []);
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
+  const handleDrop = useCallback(async (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setIsDragOver(false);
-    const files = Array.from(e.dataTransfer.files);
+
+    const entries = Array.from(e.dataTransfer.items)
+      .map(item => item.webkitGetAsEntry())
+      .filter((entry): entry is FileSystemEntry => entry !== null);
+
+    if (entries.length === 0) return;
+
+    const nested = await Promise.all(entries.map(getAllFilesFromEntry));
+    const files = nested.flat().filter(f => ACCEPTED_EXTENSIONS.test(f.name));
+
     if (files.length > 0) handleFiles(files);
+    else toast.error('No supported files found', { description: 'Drop PDF, JPG, or PNG files (or a folder containing them).' });
   }, [handleFiles]);
 
   const handleClick = useCallback(() => {
@@ -130,7 +166,7 @@ export function DropZone({ projectId, className }: DropZoneProps) {
         ) : uploadedCount > 0 ? (
           <CheckCircle className="h-6 w-6 text-primary" />
         ) : isDragOver ? (
-          <FileText className="h-6 w-6 text-primary" />
+          <Folder className="h-6 w-6 text-primary" />
         ) : (
           <Upload className="h-6 w-6 text-muted-foreground" />
         )}
@@ -141,13 +177,13 @@ export function DropZone({ projectId, className }: DropZoneProps) {
           : uploadedCount > 0
             ? `${uploadedCount} COI(s) added successfully!`
             : isDragOver
-              ? 'Drop COI files here'
-              : 'Drag & drop COI certificates'}
+              ? 'Drop files or folders here'
+              : 'Drag & drop COI certificates or folders'}
       </p>
       <p className="mt-1 text-xs text-muted-foreground">
         {isUploading
           ? 'This may take a moment'
-          : 'PDF, JPG, or PNG — we\'ll extract the details automatically'}
+          : 'PDF, JPG, or PNG — or drop a folder to process all files inside'}
       </p>
     </div>
   );
