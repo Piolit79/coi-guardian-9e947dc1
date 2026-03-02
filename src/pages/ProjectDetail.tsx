@@ -237,7 +237,7 @@ export default function ProjectDetail() {
                           <div className="flex items-center gap-1.5">
                             {(selectedCOI.certificate_holder || '').toUpperCase().includes('SLAB') ? (
                               <>
-                                <span className="font-medium text-foreground">{selectedCOI.certificate_holder}</span>
+                                <span className="font-medium text-foreground">SLAB Builders</span>
                                 <CheckCircle2 className="h-3.5 w-3.5 text-status-valid" />
                               </>
                             ) : (
