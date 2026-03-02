@@ -6,11 +6,12 @@ import { useInactiveCOIs } from '@/hooks/useInactiveCOIs';
 import { COICard } from '@/components/COICard';
 import { DropZone } from '@/components/DropZone';
 import { CreateCOIDialog } from '@/components/CreateCOIDialog';
+import { MergeCOIDialog } from '@/components/MergeCOIDialog';
 import { useGCSettings } from '@/hooks/useGCSettings';
 import { COIDetailContent, COIDetailHeader } from '@/components/COIDetailContent';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, MapPin, Loader2, Trash2, PowerOff } from 'lucide-react';
+import { ArrowLeft, MapPin, Loader2, Trash2, PowerOff, Merge } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { COI } from '@/types/coi';
 import { useState } from 'react';
@@ -43,6 +44,7 @@ export default function ProjectDetail() {
   const [selectedCOI, setSelectedCOI] = useState<COI | null>(null);
   const [editingCOI, setEditingCOI] = useState<COI | null>(null);
   const [showDeleteProject, setShowDeleteProject] = useState(false);
+  const [showMerge, setShowMerge] = useState(false);
   const deleteCOI = useDeleteCOI();
   const deleteProject = useDeleteProject();
   const { inactiveIds, toggleActive } = useInactiveCOIs();
@@ -90,7 +92,15 @@ export default function ProjectDetail() {
           <h2 className="text-sm font-semibold text-foreground">
             Certificates of Insurance ({(cois || []).length})
           </h2>
-          <CreateCOIDialog projectId={project.id} />
+          <div className="flex items-center gap-2">
+            {(cois || []).length >= 2 && (
+              <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={() => setShowMerge(true)}>
+                <Merge className="h-3.5 w-3.5" />
+                Merge
+              </Button>
+            )}
+            <CreateCOIDialog projectId={project.id} />
+          </div>
         </div>
 
         {coisLoading ? (
@@ -156,6 +166,13 @@ export default function ProjectDetail() {
             )}
           </DialogContent>
         </Dialog>
+
+        <MergeCOIDialog
+          projectId={project.id}
+          cois={cois || []}
+          open={showMerge}
+          onClose={() => setShowMerge(false)}
+        />
 
         {editingCOI && (
           <EditCOIDialog
