@@ -12,7 +12,7 @@ export function applyReminderTemplate(
   vars: { subcontractor: string; project: string; policies: string },
 ): string {
   return template
-    .replaceAll('{subcontractor}', vars.subcontractor)
-    .replaceAll('{project}', vars.project)
-    .replaceAll('{policies}', vars.policies);
+    .split('{subcontractor}').join(vars.subcontractor)
+    .split('{project}').join(vars.project)
+    .split('{policies}').join(vars.policies);
 }
