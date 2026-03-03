@@ -9,6 +9,7 @@ import { CreateCOIDialog } from '@/components/CreateCOIDialog';
 import { MergeCOIDialog } from '@/components/MergeCOIDialog';
 import { useGCSettings } from '@/hooks/useGCSettings';
 import { COIDetailContent, COIDetailHeader } from '@/components/COIDetailContent';
+import { ProjectEmailTemplate } from '@/components/ProjectEmailTemplate';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, MapPin, Loader2, Trash2, PowerOff, Merge } from 'lucide-react';
@@ -136,6 +137,8 @@ export default function ProjectDetail() {
                   coi={selectedCOI}
                   projectId={project.id}
                   projectName={project.name}
+                  reminderSubject={project.reminder_subject}
+                  reminderBody={project.reminder_body}
                   settings={settings}
                   footer={
                     <div className="pt-2 border-t border-border flex items-center gap-2">
@@ -191,7 +194,15 @@ export default function ProjectDetail() {
           />
         )}
 
-        <div className="mt-12 pt-6 border-t border-border">
+        <div className="mt-10">
+          <ProjectEmailTemplate
+            projectId={project.id}
+            subject={project.reminder_subject ?? null}
+            body={project.reminder_body ?? null}
+          />
+        </div>
+
+        <div className="mt-6 pt-6 border-t border-border">
           <Button
             variant="ghost"
             size="sm"

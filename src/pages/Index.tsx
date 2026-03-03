@@ -88,6 +88,7 @@ const Index = () => {
   const expiredCount = dashboardCois.filter((c) => c.status === 'expired').length;
   const activeProjects = (projects || []).filter((p) => p.status === 'active').length;
   const projectMap = new Map((projects || []).map((p) => [p.id, p.name]));
+  const projectTemplateMap = new Map((projects || []).map((p) => [p.id, { subject: p.reminder_subject, body: p.reminder_body }]));
 
   // Alerts: expiring + expired COIs, sorted chronologically by expiration date
   const alerts = dashboardCois.
@@ -552,6 +553,8 @@ const Index = () => {
                   coi={selectedCOI}
                   projectId={selectedCOI.project_id || ''}
                   projectName={projectMap.get(selectedCOI.project_id || '') || ''}
+                  reminderSubject={projectTemplateMap.get(selectedCOI.project_id || '')?.subject}
+                  reminderBody={projectTemplateMap.get(selectedCOI.project_id || '')?.body}
                   settings={settings}
                 />
               </>}

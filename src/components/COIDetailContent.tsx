@@ -13,6 +13,7 @@ import { COI, getStatusFromDays } from '@/types/coi';
 import { GCSettings } from '@/hooks/useGCSettings';
 import { createSignedFileUrl } from '@/lib/storageFile';
 import { cn } from '@/lib/utils';
+import { DEFAULT_REMINDER_SUBJECT, DEFAULT_REMINDER_BODY, applyReminderTemplate } from '@/lib/reminderTemplate';
 
 function CoverageComplianceCheck({ label, value, minValue }: { label: string; value: string; minValue: string }) {
   const parse = (s: string) => parseFloat((s || '0').replace(/[^0-9.]/g, ''));
@@ -58,11 +59,19 @@ interface COIDetailContentProps {
   coi: COI & { project_id?: string };
   projectId: string;
   projectName?: string;
+  reminderSubject?: string | null;
+  reminderBody?: string | null;
   settings: GCSettings | undefined;
   footer?: ReactNode;
 }
 
-function SendReminderButton({ coi, projectId, projectName }: { coi: COI; projectId: string; projectName?: string }) {
+function SendReminderButton({ coi, projectId, projectName, reminderSubject, reminderBody }: {
+  coi: COI;
+  projectId: string;
+  projectName?: string;
+  reminderSubject?: string | null;
+  reminderBody?: string | null;
+}) {
   const { emails } = useContactEmails(coi.id, coi.contact_email1, coi.contact_email2);
   const { addReminder } = useEmailReminders();
 
@@ -76,17 +85,14 @@ function SendReminderButton({ coi, projectId, projectName }: { coi: COI; project
   if (glNeedsAttention) policies.push('General Liability COI');
   if (wcNeedsAttention) policies.push("Workers' Compensation Certificate");
 
-  const policyLine = policies.join(' and your ');
-  const subject = `COI Reminder – ${coi.subcontractor}${projectName ? ` – ${projectName}` : ''}`;
+  const templateVars = {
+    subcontractor: coi.subcontractor,
+    project: projectName || '',
+    policies: policies.join(' and your '),
+  };
 
-  const body = [
-    `Dear ${coi.subcontractor},`,
-    '',
-    `Your ${policyLine} is expired. Please email an updated certificate for this project at your earliest convenience.`,
-    '',
-    'Thank you,',
-    'SLAB Builders',
-  ].join('\n');
+  const subject = applyReminderTemplate(reminderSubject || DEFAULT_REMINDER_SUBJECT, templateVars);
+  const body = applyReminderTemplate(reminderBody || DEFAULT_REMINDER_BODY, templateVars);
 
   const toAddresses = [emails.email1, emails.email2].filter(Boolean).join(',');
   const mailtoHref = `mailto:${toAddresses}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
@@ -209,7 +215,7 @@ export function COIDetailHeader({ coi }: { coi: COI }) {
   );
 }
 
-export function COIDetailContent({ coi, projectId, projectName, settings, footer }: COIDetailContentProps) {
+export function COIDetailContent({ coi, projectId, projectName, reminderSubject, reminderBody, settings, footer }: COIDetailContentProps) {
   return (
     <>
       <div className="space-y-4 mt-2">
@@ -331,7 +337,7 @@ export function COIDetailContent({ coi, projectId, projectName, settings, footer
         <COIContactEmails coiId={coi.id} initialEmail1={coi.contact_email1} initialEmail2={coi.contact_email2} />
 
         {/* Send Reminder Email */}
-        <SendReminderButton coi={coi} projectId={projectId} projectName={projectName} />
+        <SendReminderButton coi={coi} projectId={projectId} projectName={projectName} reminderSubject={reminderSubject} reminderBody={reminderBody} />
 
         {/* Documents */}
         <div className="rounded-lg border border-border p-4">

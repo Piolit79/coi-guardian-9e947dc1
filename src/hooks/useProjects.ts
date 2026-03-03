@@ -8,6 +8,8 @@ export interface DBProject {
   address: string;
   status: string;
   created_at: string;
+  reminder_subject: string | null;
+  reminder_body: string | null;
 }
 
 export interface DBProjectWithCounts extends DBProject {
@@ -103,6 +105,23 @@ export function useDeleteProject() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['projects'] });
       qc.invalidateQueries({ queryKey: ['cois'] });
+    },
+  });
+}
+
+export function useUpdateProject() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: Partial<DBProject> & { id: string }) => {
+      const { error } = await supabase
+        .from('projects')
+        .update(updates)
+        .eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: (_data, vars) => {
+      qc.invalidateQueries({ queryKey: ['projects'] });
+      qc.invalidateQueries({ queryKey: ['projects', vars.id] });
     },
   });
 }
