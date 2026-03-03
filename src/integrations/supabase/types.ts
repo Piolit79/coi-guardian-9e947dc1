@@ -131,6 +131,8 @@ export type Database = {
           certificate_holder: string | null
           coi_file_path: string | null
           company: string
+          contact_email1: string | null
+          contact_email2: string | null
           created_at: string
           description_of_operations: string | null
           gl_aggregate_limit: string | null
@@ -143,6 +145,7 @@ export type Database = {
           gl_policy_number: string | null
           hammer_clause: string
           id: string
+          is_active: boolean
           labor_law_coverage: string
           project_id: string
           subcontractor: string
@@ -164,6 +167,8 @@ export type Database = {
           certificate_holder?: string | null
           coi_file_path?: string | null
           company?: string
+          contact_email1?: string | null
+          contact_email2?: string | null
           created_at?: string
           description_of_operations?: string | null
           gl_aggregate_limit?: string | null
@@ -176,6 +181,7 @@ export type Database = {
           gl_policy_number?: string | null
           hammer_clause?: string
           id?: string
+          is_active?: boolean
           labor_law_coverage?: string
           project_id: string
           subcontractor: string
@@ -197,6 +203,8 @@ export type Database = {
           certificate_holder?: string | null
           coi_file_path?: string | null
           company?: string
+          contact_email1?: string | null
+          contact_email2?: string | null
           created_at?: string
           description_of_operations?: string | null
           gl_aggregate_limit?: string | null
@@ -209,6 +217,7 @@ export type Database = {
           gl_policy_number?: string | null
           hammer_clause?: string
           id?: string
+          is_active?: boolean
           labor_law_coverage?: string
           project_id?: string
           subcontractor?: string
