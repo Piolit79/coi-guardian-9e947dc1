@@ -63,7 +63,7 @@ interface COIDetailContentProps {
 }
 
 function SendReminderButton({ coi, projectId, projectName }: { coi: COI; projectId: string; projectName?: string }) {
-  const { emails } = useContactEmails(coi.subcontractor);
+  const { emails } = useContactEmails(coi.id, coi.contact_email1, coi.contact_email2);
   const { addReminder } = useEmailReminders();
 
   const glNeedsAttention = coi.status === 'expired' || coi.status === 'expiring';
@@ -116,8 +116,8 @@ function SendReminderButton({ coi, projectId, projectName }: { coi: COI; project
   );
 }
 
-function COIContactEmails({ subcontractorName }: { subcontractorName: string }) {
-  const { emails, setEmails } = useContactEmails(subcontractorName);
+function COIContactEmails({ coiId, initialEmail1 = '', initialEmail2 = '' }: { coiId: string; initialEmail1?: string; initialEmail2?: string }) {
+  const { emails, setEmails } = useContactEmails(coiId, initialEmail1, initialEmail2);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState({ email1: '', email2: '' });
 
@@ -327,8 +327,8 @@ export function COIDetailContent({ coi, projectId, projectName, settings, footer
           </div>
         ) : null}
 
-        {/* Contact Emails (stored in localStorage) */}
-        <COIContactEmails subcontractorName={coi.subcontractor} />
+        {/* Contact Emails */}
+        <COIContactEmails coiId={coi.id} initialEmail1={coi.contact_email1} initialEmail2={coi.contact_email2} />
 
         {/* Send Reminder Email */}
         <SendReminderButton coi={coi} projectId={projectId} projectName={projectName} />

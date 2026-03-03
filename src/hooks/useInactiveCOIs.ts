@@ -1,31 +1,27 @@
-import { useState, useCallback } from 'react';
-
-const STORAGE_KEY = 'coi-inactive-ids';
-
-function loadInactiveIds(): Set<string> {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    return new Set(stored ? JSON.parse(stored) : []);
-  } catch {
-    return new Set();
-  }
-}
+import { useCallback } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 export function useInactiveCOIs() {
-  const [inactiveIds, setInactiveIds] = useState<Set<string>>(loadInactiveIds);
+  const qc = useQueryClient();
 
-  const toggleActive = useCallback((id: string, isActive: boolean) => {
-    setInactiveIds(prev => {
-      const next = new Set(prev);
-      if (isActive) {
-        next.delete(id);
-      } else {
-        next.add(id);
-      }
-      localStorage.setItem(STORAGE_KEY, JSON.stringify([...next]));
-      return next;
-    });
-  }, []);
+  const { mutate } = useMutation({
+    mutationFn: async ({ id, isActive }: { id: string; isActive: boolean }) => {
+      const { error } = await supabase
+        .from('subcontractor_cois')
+        .update({ is_active: isActive } as any)
+        .eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['cois'] });
+    },
+  });
 
-  return { inactiveIds, toggleActive };
+  const toggleActive = useCallback(
+    (id: string, isActive: boolean) => mutate({ id, isActive }),
+    [mutate],
+  );
+
+  return { toggleActive };
 }

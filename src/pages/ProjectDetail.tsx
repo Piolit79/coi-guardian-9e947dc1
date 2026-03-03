@@ -47,7 +47,7 @@ export default function ProjectDetail() {
   const [showMerge, setShowMerge] = useState(false);
   const deleteCOI = useDeleteCOI();
   const deleteProject = useDeleteProject();
-  const { inactiveIds, toggleActive } = useInactiveCOIs();
+  const { toggleActive } = useInactiveCOIs();
 
   if (projLoading) {
     return (
@@ -112,7 +112,7 @@ export default function ProjectDetail() {
             {(cois || []).map((coi) => (
               <COICard
                 key={coi.id}
-                coi={{ ...coi, is_active: !inactiveIds.has(coi.id) }}
+                coi={coi}
                 onClick={setSelectedCOI}
               />
             ))}
@@ -156,9 +156,16 @@ export default function ProjectDetail() {
                         <Trash2 className="h-3.5 w-3.5" />Delete COI
                       </Button>
                       <div className="ml-auto flex items-center gap-2">
-                        <PowerOff className={cn('h-3.5 w-3.5', inactiveIds.has(selectedCOI.id) ? 'text-muted-foreground' : 'text-status-valid')} />
-                        <span className="text-xs text-muted-foreground">{inactiveIds.has(selectedCOI.id) ? 'Inactive' : 'Active'}</span>
-                        <Switch checked={!inactiveIds.has(selectedCOI.id)} onCheckedChange={(checked) => toggleActive(selectedCOI.id, checked)} />
+                        {(() => {
+                          const isActive = (cois || []).find(c => c.id === selectedCOI.id)?.is_active !== false;
+                          return (
+                            <>
+                              <PowerOff className={cn('h-3.5 w-3.5', isActive ? 'text-status-valid' : 'text-muted-foreground')} />
+                              <span className="text-xs text-muted-foreground">{isActive ? 'Active' : 'Inactive'}</span>
+                              <Switch checked={isActive} onCheckedChange={(checked) => toggleActive(selectedCOI.id, checked)} />
+                            </>
+                          );
+                        })()}
                       </div>
                     </div>
                   }

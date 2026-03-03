@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { useProjects } from '@/hooks/useProjects';
 import { useAllCOIs } from '@/hooks/useCOIs';
 import { useGCSettings } from '@/hooks/useGCSettings';
-import { useInactiveCOIs } from '@/hooks/useInactiveCOIs';
 import { StatusBadge } from '@/components/StatusBadge';
 import { COIDetailContent, COIDetailHeader } from '@/components/COIDetailContent';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
@@ -51,8 +50,7 @@ const Index = () => {
   const { data: projects, isLoading: projLoading } = useProjects();
   const { data: allCoisRaw } = useAllCOIs();
   const { data: settings } = useGCSettings();
-  const { inactiveIds } = useInactiveCOIs();
-  const allCois = (allCoisRaw || []).filter(c => !inactiveIds.has(c.id));
+  const allCois = (allCoisRaw || []).filter(c => c.is_active !== false);
   const [expandedProjects, setExpandedProjects] = useState<Set<string>>(new Set());
   const [selectedCOI, setSelectedCOI] = useState<(COI & {project_id?: string;}) | null>(null);
 

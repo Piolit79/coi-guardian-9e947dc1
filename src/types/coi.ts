@@ -58,6 +58,8 @@ export interface COI {
   certificate_holder?: string;
   description_of_operations?: string;
   is_active?: boolean;
+  contact_email1?: string;
+  contact_email2?: string;
 }
 
 export interface Project {
