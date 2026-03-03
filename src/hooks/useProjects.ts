@@ -115,7 +115,7 @@ export function useUpdateProject() {
     mutationFn: async ({ id, ...updates }: Partial<DBProject> & { id: string }) => {
       const { error } = await supabase
         .from('projects')
-        .update(updates)
+        .update(updates as any)
         .eq('id', id);
       if (error) throw error;
     },
