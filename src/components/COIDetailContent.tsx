@@ -76,7 +76,7 @@ function SendReminderButton({ coi, projectId, projectName, reminderSubject, remi
   const { emails } = useContactEmails(coi.id, coi.contact_email1, coi.contact_email2);
   const { addReminder } = useEmailReminders();
 
-  const glNeedsAttention = !!coi.expirationDate && (coi.status === 'expired' || coi.status === 'expiring');
+  const glNeedsAttention = coi.status === 'expired' || coi.status === 'expiring';
   const wcNeedsAttention = !!coi.wcPolicy?.expirationDate && (coi.wcPolicy.status === 'expired' || coi.wcPolicy.status === 'expiring');
 
   if (!glNeedsAttention && !wcNeedsAttention) return null;
