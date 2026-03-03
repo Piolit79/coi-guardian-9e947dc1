@@ -1,10 +1,15 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
 export function useContactEmails(coiId: string, initialEmail1 = '', initialEmail2 = '') {
   const qc = useQueryClient();
   const [emails, setEmailsLocal] = useState({ email1: initialEmail1, email2: initialEmail2 });
+
+  // Sync when initial values change (DB refetch or fuzzy match resolves)
+  useEffect(() => {
+    setEmailsLocal({ email1: initialEmail1, email2: initialEmail2 });
+  }, [initialEmail1, initialEmail2]);
 
   const { mutate } = useMutation({
     mutationFn: async ({ email1, email2 }: { email1: string; email2: string }) => {

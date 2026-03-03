@@ -1,6 +1,7 @@
 import { ReactNode, useState, useEffect } from 'react';
 import { CheckCircle2, XCircle, AlertTriangle, Loader2, ExternalLink, Mail, Pencil, Send } from 'lucide-react';
 import { useContactEmails } from '@/hooks/useContactEmails';
+import { useFuzzyContactEmail } from '@/hooks/useFuzzyContactEmail';
 import { useEmailReminders } from '@/hooks/useEmailReminders';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -122,8 +123,11 @@ function SendReminderButton({ coi, projectId, projectName, reminderSubject, remi
   );
 }
 
-function COIContactEmails({ coiId, initialEmail1 = '', initialEmail2 = '' }: { coiId: string; initialEmail1?: string; initialEmail2?: string }) {
-  const { emails, setEmails } = useContactEmails(coiId, initialEmail1, initialEmail2);
+function COIContactEmails({ coiId, subcontractorName, initialEmail1 = '', initialEmail2 = '' }: { coiId: string; subcontractorName: string; initialEmail1?: string; initialEmail2?: string }) {
+  const fuzzy = useFuzzyContactEmail(coiId, subcontractorName);
+  const effectiveEmail1 = initialEmail1 || fuzzy.email1;
+  const effectiveEmail2 = initialEmail2 || fuzzy.email2;
+  const { emails, setEmails } = useContactEmails(coiId, effectiveEmail1, effectiveEmail2);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState({ email1: '', email2: '' });
 
@@ -334,7 +338,7 @@ export function COIDetailContent({ coi, projectId, projectName, reminderSubject,
         ) : null}
 
         {/* Contact Emails */}
-        <COIContactEmails coiId={coi.id} initialEmail1={coi.contact_email1} initialEmail2={coi.contact_email2} />
+        <COIContactEmails coiId={coi.id} subcontractorName={coi.subcontractor} initialEmail1={coi.contact_email1} initialEmail2={coi.contact_email2} />
 
         {/* Send Reminder Email */}
         <SendReminderButton coi={coi} projectId={projectId} projectName={projectName} reminderSubject={reminderSubject} reminderBody={reminderBody} />
