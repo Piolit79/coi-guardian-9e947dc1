@@ -10,8 +10,10 @@ const corsHeaders = {
 const THRESHOLDS = [
   { days: 30, type: "30_day", label: "30 days" },
   { days: 15, type: "15_day", label: "15 days" },
-  { days: 3, type: "3_day", label: "3 days" },
+  { days: 3,  type: "3_day",  label: "3 days"  },
 ];
+
+const OVERDUE_TYPE = "overdue";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -76,10 +78,11 @@ serve(async (req) => {
       );
     }
 
-    // Get all COIs with their project info
+    // Get all active COIs with their project info
     const { data: cois, error: coiErr } = await supabase
       .from("subcontractor_cois")
-      .select("id, subcontractor, gl_expiration_date, wc_expiration_date, project_id");
+      .select("id, subcontractor, gl_expiration_date, wc_expiration_date, project_id")
+      .eq("is_active", true);
 
     if (coiErr) throw coiErr;
 
@@ -112,7 +115,7 @@ serve(async (req) => {
       project: string;
       policyType: string;
       expDate: string;
-      threshold: (typeof THRESHOLDS)[number];
+      threshold: { days: number; type: string; label: string };
     }> = [];
 
     for (const coi of cois || []) {
@@ -129,8 +132,9 @@ serve(async (req) => {
           (expDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
         );
 
+        // Upcoming expiry: check each threshold window (1–30 days out)
         for (const threshold of THRESHOLDS) {
-          if (daysUntil <= threshold.days && daysUntil > 0) {
+          if (daysUntil > 0 && daysUntil <= threshold.days) {
             const key = `${coi.id}_${threshold.type}_${policy.type}_${policy.date}`;
             if (!sentSet.has(key)) {
               remindersToSend.push({
@@ -142,6 +146,21 @@ serve(async (req) => {
                 threshold,
               });
             }
+          }
+        }
+
+        // Already expired: send once if not yet notified
+        if (daysUntil <= 0) {
+          const key = `${coi.id}_${OVERDUE_TYPE}_${policy.type}_${policy.date}`;
+          if (!sentSet.has(key)) {
+            remindersToSend.push({
+              coiId: coi.id,
+              sub: coi.subcontractor,
+              project: projectMap.get(coi.project_id) || "Unknown",
+              policyType: policy.type.toUpperCase(),
+              expDate: policy.date,
+              threshold: { days: 0, type: OVERDUE_TYPE, label: "OVERDUE" },
+            });
           }
         }
       }
@@ -162,20 +181,27 @@ serve(async (req) => {
       grouped.get(key)!.push(r);
     }
 
+    // Order: overdue first, then closest expiry
+    const orderedKeys = [OVERDUE_TYPE, "3_day", "15_day", "30_day"].filter(k => grouped.has(k));
+
     // Build email HTML
     let html = `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">`;
     html += `<h2 style="color: #1a1a1a;">COI Expiration Reminders</h2>`;
     html += `<p style="color: #666;">The following certificates need attention:</p>`;
 
-    for (const [type, items] of grouped) {
-      const label = THRESHOLDS.find((t) => t.type === type)?.label || type;
-      html += `<h3 style="color: #d97706; margin-top: 24px;">⚠️ Expiring within ${label}</h3>`;
+    for (const key of orderedKeys) {
+      const items = grouped.get(key)!;
+      const label = key === OVERDUE_TYPE ? "OVERDUE" : `Expiring within ${THRESHOLDS.find(t => t.type === key)?.label}`;
+      const color = key === OVERDUE_TYPE ? "#dc2626" : "#d97706";
+      const icon = key === OVERDUE_TYPE ? "🚨" : "⚠️";
+
+      html += `<h3 style="color: ${color}; margin-top: 24px;">${icon} ${label}</h3>`;
       html += `<table style="width: 100%; border-collapse: collapse; font-size: 14px;">`;
       html += `<tr style="background: #f5f5f5; text-align: left;">
         <th style="padding: 8px; border-bottom: 1px solid #ddd;">Subcontractor</th>
         <th style="padding: 8px; border-bottom: 1px solid #ddd;">Project</th>
-        <th style="padding: 8px; border-bottom: 1px solid #ddd;">Type</th>
-        <th style="padding: 8px; border-bottom: 1px solid #ddd;">Expires</th>
+        <th style="padding: 8px; border-bottom: 1px solid #ddd;">Policy</th>
+        <th style="padding: 8px; border-bottom: 1px solid #ddd;">Expiry Date</th>
       </tr>`;
       for (const item of items) {
         html += `<tr>
@@ -201,7 +227,7 @@ serve(async (req) => {
       body: JSON.stringify({
         from: "COI Tracker <onboarding@resend.dev>",
         to: [toEmail],
-        subject: `⚠️ ${remindersToSend.length} COI(s) expiring soon`,
+        subject: `⚠️ ${remindersToSend.length} COI(s) need attention`,
         html,
       }),
     });

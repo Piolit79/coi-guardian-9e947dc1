@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
-import { Upload, FileText, Loader2, CheckCircle } from 'lucide-react';
+import { Upload, FileText, Loader2, CheckCircle, Send } from 'lucide-react';
 import { useState, useCallback } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -14,6 +14,7 @@ export default function Settings() {
   const { data: settings, isLoading } = useGCSettings();
   const updateSettings = useUpdateGCSettings();
   const [uploading, setUploading] = useState(false);
+  const [testingEmail, setTestingEmail] = useState(false);
 
   const handleAgreementUpload = useCallback(async () => {
     const input = document.createElement('input');
@@ -104,9 +105,9 @@ export default function Settings() {
             Expiration Reminders
           </h2>
           <p className="text-xs text-muted-foreground mb-4">
-            Get emailed at 30, 15, and 3 days before a COI expires. Updated certificates automatically stop reminders.
+            Get emailed at 30, 15, and 3 days before a COI expires, and once more if already overdue. Updated certificates automatically stop reminders.
           </p>
-          <div className="space-y-2">
+          <div className="space-y-2 mb-4">
             <Label htmlFor="notification-email" className="text-xs">Notification Email</Label>
             <Input
               id="notification-email"
@@ -116,6 +117,45 @@ export default function Settings() {
               onBlur={(e) => updateSettings.mutate({ notification_email: e.target.value } as any)}
             />
           </div>
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2"
+            disabled={testingEmail || !(settings as any)?.notification_email}
+            onClick={async () => {
+              setTestingEmail(true);
+              try {
+                const { error } = await supabase.functions.invoke('coi-reminders', {
+                  body: {},
+                  headers: { 'x-test': 'true' },
+                });
+                // invoke doesn't expose query params directly, call via fetch
+                const resp = await fetch(
+                  `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/coi-reminders?test=true`,
+                  {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                      'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+                    },
+                    body: '{}',
+                  }
+                );
+                const result = await resp.json();
+                if (!resp.ok) throw new Error(result.error || 'Unknown error');
+                toast.success('Test email sent', { description: result.message });
+              } catch (err) {
+                toast.error('Failed to send test email', {
+                  description: err instanceof Error ? err.message : 'Unknown error',
+                });
+              } finally {
+                setTestingEmail(false);
+              }
+            }}
+          >
+            {testingEmail ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+            Send Test Email
+          </Button>
         </Card>
 
         <Card className="border border-border p-6 mb-6">
