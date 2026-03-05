@@ -408,8 +408,8 @@ const Index = () => {
               <h2 className="text-sm font-semibold text-foreground">Expiration Alerts</h2>
               {alerts.length > 0 && <span className="rounded-full bg-status-warning-bg px-2 py-0.5 text-[10px] font-semibold text-status-warning">{alerts.length}</span>}
             </div>
-            {alerts.length > 0 ? <div className="space-y-1 max-h-[274px] overflow-y-auto pr-1">
-                {alerts.map((coi) => <Card key={coi.id} className="flex items-center gap-2 border border-border px-2 py-2 cursor-pointer hover:shadow-sm transition-shadow" onClick={() => setSelectedCOI(coi)}>
+            {alerts.length > 0 ? <div className="space-y-1 max-h-[286px] overflow-y-auto pr-1">
+                {alerts.map((coi) => <Card key={coi.id} className="flex items-center gap-2 border border-border px-2 py-[9px] cursor-pointer hover:shadow-sm transition-shadow" onClick={() => setSelectedCOI(coi)}>
                     <Bell className="h-3 w-3 text-status-warning shrink-0" />
                     <div className="flex-1 min-w-0 flex items-center gap-2">
                       <p className="text-xs font-medium text-foreground truncate">{coi.subcontractor}</p>
