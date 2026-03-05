@@ -52,11 +52,15 @@ https://github.com/Piolit79/coi-guardian-9e947dc1
 - Minimum GL coverage limit
 - Workers' Comp and Additional Insured toggles
 
-## Last Session — 2026-03-05
-- Discussed adding email sending directly through the app
-- Evaluated: mailto (current) → Outlook Web link → Gmail SMTP + App Password → Resend
-- **Decision**: Leave email as mailto for now, revisit later
-- **Next**: Ask user what feature they want to work on next
+## Session Log
+
+### 2026-03-05
+- Discussed email reminder feature — currently opens Outlook via mailto:
+- User email: mhm@slabbuilders.com (Google Workspace, IMAP to standalone Outlook)
+- Evaluated options: Outlook Web link, Gmail SMTP + Nodemailer, Resend + domain verify
+- **Decision**: Leave as mailto for now. Future upgrade = Gmail SMTP + App Password (sends from real account, shows in Sent Items)
+- Set up CLAUDE.md for session memory across all three projects
+- **Next**: Ask user what feature they want to work on
 
 ## Notes
 - There are two local copies: `coi-guardian` and `coi-guardian-9e947dc1` — the active one is `coi-guardian-9e947dc1`
