@@ -27,7 +27,7 @@ function SidebarLogo({ compact = false }: {compact?: boolean;}) {
   if (compact) return null;
   return (
     <div className="flex flex-col items-start pt-4 w-full">
-      <img src={slabLogo} alt="SLAB Builders" className="w-full max-w-[200px]" />
+      <a href="/"><img src={slabLogo} alt="SLAB Builders" className="w-full max-w-[200px]" /></a>
     </div>
   );
 
@@ -57,7 +57,7 @@ export function AppSidebar() {
           <button onClick={() => setMobileOpen(true)} className="p-1.5 -ml-1.5">
             <Menu className="h-5 w-5 text-foreground" />
           </button>
-          <img src={slabLogo} alt="SLAB Builders" className="h-7" />
+          <a href="/"><img src={slabLogo} alt="SLAB Builders" className="h-7" /></a>
           <span className="text-[11px] font-medium tracking-[0.08em] uppercase px-[9px] py-[11px] my-0 mx-[4px] pr-[26px] pb-[7px]" style={{ color: '#7b7c81' }}>COI Tracker</span>
         </div>
 
