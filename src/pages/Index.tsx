@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { useProjects } from '@/hooks/useProjects';
 import { useAllCOIs } from '@/hooks/useCOIs';
 import { useGCSettings } from '@/hooks/useGCSettings';
+import { useInactiveCOIs } from '@/hooks/useInactiveCOIs';
+import { Switch } from '@/components/ui/switch';
 import { StatusBadge } from '@/components/StatusBadge';
 import { COIDetailContent, COIDetailHeader } from '@/components/COIDetailContent';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
@@ -20,7 +22,8 @@ import {
   CheckCircle2,
   Loader2,
   Bell,
-  CalendarDays } from
+  CalendarDays,
+  PowerOff } from
 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useState, useMemo } from 'react';
@@ -50,6 +53,7 @@ const Index = () => {
   const { data: projects, isLoading: projLoading } = useProjects();
   const { data: allCoisRaw } = useAllCOIs();
   const { data: settings } = useGCSettings();
+  const { toggleActive } = useInactiveCOIs();
   const allCois = (allCoisRaw || []).filter(c => c.is_active !== false);
   const [expandedProjects, setExpandedProjects] = useState<Set<string>>(new Set());
   const [selectedCOI, setSelectedCOI] = useState<(COI & {project_id?: string;}) | null>(null);
@@ -556,6 +560,16 @@ const Index = () => {
                   reminderSubject={projectTemplateMap.get(selectedCOI.project_id || '')?.subject}
                   reminderBody={projectTemplateMap.get(selectedCOI.project_id || '')?.body}
                   settings={settings}
+                  footer={
+                    <div className="pt-2 border-t border-border flex items-center justify-end gap-2">
+                      <PowerOff className={cn('h-3.5 w-3.5', selectedCOI.is_active !== false ? 'text-status-valid' : 'text-muted-foreground')} />
+                      <span className="text-xs text-muted-foreground">{selectedCOI.is_active !== false ? 'Active' : 'Inactive'}</span>
+                      <Switch
+                        checked={selectedCOI.is_active !== false}
+                        onCheckedChange={(checked) => toggleActive(selectedCOI.id, checked)}
+                      />
+                    </div>
+                  }
                 />
               </>}
           </DialogContent>
