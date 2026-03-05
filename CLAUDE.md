@@ -54,13 +54,20 @@ https://github.com/Piolit79/coi-guardian-9e947dc1
 
 ## Session Log
 
-### 2026-03-05
+### 2026-03-05 (Session 1)
 - Discussed email reminder feature — currently opens Outlook via mailto:
 - User email: mhm@slabbuilders.com (Google Workspace, IMAP to standalone Outlook)
 - Evaluated options: Outlook Web link, Gmail SMTP + Nodemailer, Resend + domain verify
 - **Decision**: Leave as mailto for now. Future upgrade = Gmail SMTP + App Password (sends from real account, shows in Sent Items)
 - Set up CLAUDE.md for session memory across all three projects
-- **Next**: Ask user what feature they want to work on
+
+### 2026-03-05 (Session 2)
+- **Fixed**: Send Reminder button missing on some COIs — `SendReminderButton` was not using fuzzy email matching, now consistent with `COIContactEmails` (`src/components/COIDetailContent.tsx`)
+- **Added**: Active/Inactive toggle to dashboard COI detail dialog (matches ProjectDetail) — imports `useInactiveCOIs`, `Switch`, `PowerOff` in `src/pages/Index.tsx`
+- **Added**: Projects default to expanded on dashboard load — `useEffect` initializes `expandedProjects` with all project IDs on first load
+- **Added**: Slab Builders logo is now clickable (full reload to `/`) on both desktop and mobile (`src/components/AppSidebar.tsx`)
+- **Tuned**: Expiration alerts — compact single-row layout (px-2 py-2), max-h-[274px] to show 6 clean rows aligned with calendar bottom (still iterating — last value was 274px, may need minor tweak)
+- **Next**: Confirm alert height is correct with screenshot #5
 
 ## Notes
 - There are two local copies: `coi-guardian` and `coi-guardian-9e947dc1` — the active one is `coi-guardian-9e947dc1`
