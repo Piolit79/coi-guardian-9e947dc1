@@ -73,7 +73,10 @@ function SendReminderButton({ coi, projectId, projectName, reminderSubject, remi
   reminderSubject?: string | null;
   reminderBody?: string | null;
 }) {
-  const { emails } = useContactEmails(coi.id, coi.contact_email1, coi.contact_email2);
+  const fuzzy = useFuzzyContactEmail(coi.id, coi.subcontractor);
+  const effectiveEmail1 = coi.contact_email1 || fuzzy.email1;
+  const effectiveEmail2 = coi.contact_email2 || fuzzy.email2;
+  const { emails } = useContactEmails(coi.id, effectiveEmail1, effectiveEmail2);
   const { addReminder } = useEmailReminders();
 
   const glNeedsAttention = coi.status === 'expired' || coi.status === 'expiring';
