@@ -26,7 +26,7 @@ import {
   PowerOff } from
 'lucide-react';
 import { Link } from 'react-router-dom';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { COI } from '@/types/coi';
 import {
@@ -56,7 +56,15 @@ const Index = () => {
   const { toggleActive } = useInactiveCOIs();
   const allCois = (allCoisRaw || []).filter(c => c.is_active !== false);
   const [expandedProjects, setExpandedProjects] = useState<Set<string>>(new Set());
+  const [projectsInitialized, setProjectsInitialized] = useState(false);
   const [selectedCOI, setSelectedCOI] = useState<(COI & {project_id?: string;}) | null>(null);
+
+  useEffect(() => {
+    if (projects && !projectsInitialized) {
+      setExpandedProjects(new Set(projects.map((p) => p.id)));
+      setProjectsInitialized(true);
+    }
+  }, [projects, projectsInitialized]);
 
 
   const toggleProject = (id: string) => {
@@ -401,7 +409,7 @@ const Index = () => {
               {alerts.length > 0 && <span className="rounded-full bg-status-warning-bg px-2 py-0.5 text-[10px] font-semibold text-status-warning">{alerts.length}</span>}
             </div>
             {alerts.length > 0 ? <div className="space-y-2 max-h-[280px] overflow-y-auto pr-1">
-                {alerts.map((coi) => <Card key={coi.id} className="flex items-start gap-3 border border-border p-3 cursor-pointer hover:shadow-sm transition-shadow" onClick={() => setSelectedCOI(coi)}>
+                {alerts.map((coi) => <Card key={coi.id} className="flex items-start gap-2 border border-border p-2 cursor-pointer hover:shadow-sm transition-shadow" onClick={() => setSelectedCOI(coi)}>
                     <Bell className="h-3.5 w-3.5 text-status-warning mt-0.5 shrink-0" />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-0.5">
