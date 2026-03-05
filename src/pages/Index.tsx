@@ -408,21 +408,17 @@ const Index = () => {
               <h2 className="text-sm font-semibold text-foreground">Expiration Alerts</h2>
               {alerts.length > 0 && <span className="rounded-full bg-status-warning-bg px-2 py-0.5 text-[10px] font-semibold text-status-warning">{alerts.length}</span>}
             </div>
-            {alerts.length > 0 ? <div className="space-y-2 max-h-[280px] overflow-y-auto pr-1">
-                {alerts.map((coi) => <Card key={coi.id} className="flex items-start gap-2 border border-border p-2 cursor-pointer hover:shadow-sm transition-shadow" onClick={() => setSelectedCOI(coi)}>
-                    <Bell className="h-3.5 w-3.5 text-status-warning mt-0.5 shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-0.5">
-                        <p className="text-sm font-medium text-foreground truncate">{coi.subcontractor}</p>
-                        <StatusBadge status={coi.status} daysUntilExpiry={coi.daysUntilExpiry} />
-                      </div>
-                      {coi.project_id && projectMap.get(coi.project_id) && <p className="text-[11px] font-medium text-primary mb-0.5 truncate">
-                          {projectMap.get(coi.project_id)}
-                        </p>}
-                      <p className="text-xs text-muted-foreground">
-                        {coi.status === 'expired' ? 'Expired' : 'Expires'}{' '}
-                        <span className="font-medium text-foreground">{coi.expirationDate}</span>
-                      </p>
+            {alerts.length > 0 ? <div className="space-y-1 max-h-[280px] overflow-y-auto pr-1">
+                {alerts.map((coi) => <Card key={coi.id} className="flex items-center gap-2 border border-border px-2 py-1 cursor-pointer hover:shadow-sm transition-shadow" onClick={() => setSelectedCOI(coi)}>
+                    <Bell className="h-3 w-3 text-status-warning shrink-0" />
+                    <div className="flex-1 min-w-0 flex items-center gap-2">
+                      <p className="text-xs font-medium text-foreground truncate">{coi.subcontractor}</p>
+                      {coi.project_id && projectMap.get(coi.project_id) && <p className="text-[10px] text-primary truncate shrink-0">— {projectMap.get(coi.project_id)}</p>}
+                    </div>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <span className="text-[10px] text-muted-foreground">{coi.expirationDate}</span>
+                      <StatusBadge status={coi.status} daysUntilExpiry={coi.daysUntilExpiry} />
+                    </div>
                     </div>
                   </Card>)}
               </div> : <Card className="flex items-center gap-3 border border-border p-6">
