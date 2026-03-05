@@ -419,7 +419,6 @@ const Index = () => {
                       <span className="text-[10px] text-muted-foreground">{coi.expirationDate}</span>
                       <StatusBadge status={coi.status} daysUntilExpiry={coi.daysUntilExpiry} />
                     </div>
-                    </div>
                   </Card>)}
               </div> : <Card className="flex items-center gap-3 border border-border p-6">
                 <CheckCircle2 className="h-5 w-5 text-status-valid" />
