@@ -61,6 +61,10 @@ https://github.com/Piolit79/coi-guardian-9e947dc1
 - **Decision**: Leave as mailto for now. Future upgrade = Gmail SMTP + App Password (sends from real account, shows in Sent Items)
 - Set up CLAUDE.md for session memory across all three projects
 
+### 2026-03-05 (Session 3)
+- No COI Guardian changes this session — focused entirely on building SLAB Ledger
+- SLAB Ledger built, deployed, and live at https://slabledger.vercel.app
+
 ### 2026-03-05 (Session 2)
 - **Fixed**: Send Reminder button missing on some COIs — `SendReminderButton` was not using fuzzy email matching, now consistent with `COIContactEmails` (`src/components/COIDetailContent.tsx`)
 - **Added**: Active/Inactive toggle to dashboard COI detail dialog (matches ProjectDetail) — imports `useInactiveCOIs`, `Switch`, `PowerOff` in `src/pages/Index.tsx`
